@@ -229,8 +229,11 @@ pyrightconfig.json
 
 
 
+
+
 #################################################################################
 scripts/
 outputs/
 param_data/
 data/
+figs/
