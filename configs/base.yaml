@@ -20,9 +20,9 @@ replay_buffer:
   capacity: 100000
   seed: ${global_seed}
 
-max_steps: 100000
+max_steps: 1000000
 batch_size: 256
-
+debug_mode: False
 
 
 load_system_checkpoint:

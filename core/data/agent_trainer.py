@@ -1,7 +1,5 @@
 from collections import deque
 
-import numpy as np
-import torch
 import wandb
 
 
@@ -12,7 +10,6 @@ class AgentTrainer:
         self.cumulative_rewards = deque(maxlen=101)  # cumulative rewards
 
         self.average_reward = [0] * 10
-        self.device = config.device
         self.batch_size = config.batch_size
         self.updates = 0
         self.cur_state, _ = env.reset()
@@ -26,8 +23,6 @@ class AgentTrainer:
 
     def rollout(self):
         state = self.cur_state
-
-
 
         # Rollout a trajectory with 16 samples
         for step in range(self.max_steps):
@@ -69,7 +64,4 @@ class AgentTrainer:
                 self.model.update(batch, step)
 
 
-                self.monitor.insert_entropy_rate(float(alpha))
-                if not self.debug_mode:
-                    wandb.log({"Entropy Rate": float(alpha), "Average Reward": self.average_reward[-1]})
-
+            return
