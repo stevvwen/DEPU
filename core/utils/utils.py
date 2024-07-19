@@ -224,9 +224,9 @@ def weight_init(m):
             m.bias.data.fill_(0.0)
 
 
-def make_agent(obs_dim, action_dim, cfg):
+def make_agent(obs_dim, act_dim, cfg):
     cfg.obs_shape = obs_dim
-    cfg.action_shape = action_dim
+    cfg.act_shape = act_dim
     return hydra.utils.instantiate(cfg)
 
 # Util code for env code
