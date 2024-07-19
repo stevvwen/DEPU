@@ -1,4 +1,4 @@
-from datetime import datetime
+import datetime
 import wandb
 from core.data.agent_trainer import AgentTrainer
 from core.runner.runner import *
@@ -12,12 +12,15 @@ def training_td3_for_data(config: DictConfig):
     env, obs_dim, act_dim = make_env(config.rl_env)
     agent= make_agent(obs_dim, act_dim, config.agent.agent)
     replay_buffer= hydra.utils.instantiate(config.replay_buffer)
+    
+    tmp_name= datetime.datetime.now().strftime('%y%m%d_%H%M%S')
+    
     wandb.login()
 
     run = wandb.init(
         # Set the project where this run will be logged
         project="DEPU",
-        name= datetime.now().strftime('%y%m%d_%H%M%S'),
+        name= tmp_name,
         config=config.agent.agent,
         allow_val_change=True
     )

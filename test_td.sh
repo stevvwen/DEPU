@@ -3,11 +3,10 @@
 #SBATCH --account=rrg-bengioy-ad
 #SBATCH --output=scripts/out2.txt
 #SBATCH --gres=gpu:v100l:1
-#SBATCH --mem=64000M
+#SBATCH --mem=32000M
 
-module load python/3.10
-module load cuda
+module load python/3.11
 
 source ../depu/bin/activate
 
-python test_td3_training.py
+python test_agent_training.py
