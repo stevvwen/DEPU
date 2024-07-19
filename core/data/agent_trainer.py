@@ -4,7 +4,7 @@ import wandb
 
 
 class AgentTrainer:
-    def __init__(self, config, env, model, replay_buffer):
+    def __init__(self, config, env, model, replay_buffer, eval_mode= False):
         self.env = env
         self.reward_trace = 0  # trace of reward
         self.cumulative_rewards = deque(maxlen=101)  # cumulative rewards
@@ -20,6 +20,7 @@ class AgentTrainer:
         self.debug_mode = config.debug_mode
         self.buffer = replay_buffer
         self.model= model
+        self.eval_mode= eval_mode
 
     def rollout(self):
 
@@ -32,7 +33,7 @@ class AgentTrainer:
 
 
 
-            action = self.model.act(state, step, False)  # Select action
+            action = self.model.act(state, step, self.eval_mode)  # Select action
             next_state, reward, terminated, truncated, info = self.env.step(action)  # Step
             self.epi_steps += 1
 

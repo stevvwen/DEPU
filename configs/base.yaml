@@ -7,6 +7,7 @@ defaults:
 
 global_seed: 42
 
+debug_mode: True
 
 device:
   cuda_visible_devices:  "0,1,2,3,4,5,6"
@@ -22,7 +23,7 @@ replay_buffer:
 
 max_steps: 1000000
 batch_size: 256
-debug_mode: False
+
 
 
 load_system_checkpoint:

@@ -14,21 +14,23 @@ def training_td3_for_data(config: DictConfig):
     replay_buffer= hydra.utils.instantiate(config.replay_buffer)
     
     tmp_name= datetime.datetime.now().strftime('%y%m%d_%H%M%S')
-    
-    wandb.login()
-    agent_cfg= config.agent.agent
 
-    run = wandb.init(
-        # Set the project where this run will be logged
-        project="DEPU",
-        name= tmp_name,
-        config={"learning rate": agent_cfg.lr,
-                "observation size": agent_cfg.obs_shape,
-                "action size": agent_cfg.act_shape,
-                "hidden size": agent_cfg.hidden_dim,
-                },
-        allow_val_change=True
-    )
+    agent_cfg = config.agent.agent
+    if not config.debug_mode:
+        wandb.login()
+
+
+        run = wandb.init(
+            # Set the project where this run will be logged
+            project="DEPU",
+            name= tmp_name,
+            config={"learning rate": agent_cfg.lr,
+                    "observation size": agent_cfg.obs_shape,
+                    "action size": agent_cfg.act_shape,
+                    "hidden size": agent_cfg.hidden_dim,
+                    },
+            allow_val_change=True
+        )
 
     trainer= AgentTrainer(config, env= env, model= agent, replay_buffer= replay_buffer)
     trainer.rollout()
