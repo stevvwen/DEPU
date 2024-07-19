@@ -32,7 +32,7 @@ class AgentTrainer:
 
 
 
-            action = self.model.act(state, step)  # Select action
+            action = self.model.act(state, step, False)  # Select action
             next_state, reward, terminated, truncated, info = self.env.step(action)  # Step
             self.epi_steps += 1
 
