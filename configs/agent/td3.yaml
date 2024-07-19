@@ -3,7 +3,7 @@ agent_name: td3
 agent:
   _target_: agents.td3.TD3Agent
   obs_shape: ??? # to be specified later
-  action_shape: ??? # to be specified later
+  act_shape: ??? # to be specified later
   device: cuda:${device.id}
   lr: 1e-4
   hidden_dim: 256

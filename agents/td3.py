@@ -26,17 +26,18 @@ class TD3Agent:
         self.num_expl_steps = num_expl_steps
         self.stddev_schedule = stddev_schedule
         self.stddev_clip = stddev_clip
-        self.action_dim = act_shape[0]
+        self.obs_dim= obs_shape[0]
+        self.act_dim = act_shape[0]
         self.hidden_dim = hidden_dim
         self.lr = lr
         #TODO: Check with Sahand
         self.discount= discount
 
         # models
-        self.actor = DeterministicActor(obs_shape[0], action_shape[0], hidden_dim).to(self.device)
+        self.actor = DeterministicActor(self.obs_dim, self.act_dim, hidden_dim).to(self.device)
         self.actor_target = copy.deepcopy(self.actor)
 
-        self.critic = Critic(obs_shape[0], action_shape[0], hidden_dim).to(self.device)
+        self.critic = Critic(self.obs_dim, self.act_dim, hidden_dim).to(self.device)
         self.critic_target = copy.deepcopy(self.critic)
 
         # optimizers
