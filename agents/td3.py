@@ -16,7 +16,7 @@ import core.utils.utils as utils
 
 
 class TD3Agent:
-    def __init__(self, obs_shape, action_shape, device, lr, hidden_dim,
+    def __init__(self, obs_shape, act_shape, device, lr, hidden_dim,
                  critic_target_tau, num_expl_steps, update_every_steps,
                  stddev_schedule, stddev_clip, discount):
 
@@ -26,7 +26,7 @@ class TD3Agent:
         self.num_expl_steps = num_expl_steps
         self.stddev_schedule = stddev_schedule
         self.stddev_clip = stddev_clip
-        self.action_dim = action_shape[0]
+        self.action_dim = act_shape[0]
         self.hidden_dim = hidden_dim
         self.lr = lr
         #TODO: Check with Sahand
