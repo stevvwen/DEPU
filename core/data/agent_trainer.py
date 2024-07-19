@@ -22,6 +22,9 @@ class AgentTrainer:
         self.model= model
 
     def rollout(self):
+
+
+        print(f"Agent training starts")
         state = self.cur_state
 
         # Rollout a trajectory with 16 samples
