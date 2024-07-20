@@ -71,7 +71,7 @@ class TD3Agent:
 
         return {
             'state': obs.cpu().numpy()[0],
-            'value': q.cpu().numpy()[0]
+            'value': q.detach().cpu().numpy()[0]
         }
 
     def update_critic(self, obs, action, reward, next_obs, step):
@@ -91,7 +91,6 @@ class TD3Agent:
 
         # Get current Q estimates
         current_Q1, current_Q2 = self.critic(obs, action)
-
         # Compute critic loss
         critic_loss = F.mse_loss(current_Q1, target_Q) + F.mse_loss(current_Q2, target_Q)
 
