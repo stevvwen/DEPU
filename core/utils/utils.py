@@ -204,6 +204,11 @@ def schedule(schdl, step):
                 return (1.0 - mix) * final1 + mix * final2
     raise NotImplementedError(schdl)
 
+
+def to_float_tensor(batch):
+    return tuple(torch.FloatTensor(x) for x in batch)
+
+
 def to_torch(xs, device):
     return tuple(torch.as_tensor(x, device=device) for x in xs)
 
