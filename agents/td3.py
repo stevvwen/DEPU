@@ -125,6 +125,7 @@ class TD3Agent:
     def update(self, batch, step):
         metrics = dict()
 
+        batch= utils.to_float_tensor(batch)
         obs, action, reward, next_obs, _ = utils.to_torch(
             batch, self.device)
 
