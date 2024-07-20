@@ -5,7 +5,7 @@ import torch
 import os
 import torch.nn.functional as F
 import torch.nn as nn
-import gym
+import gymnasium as gym
 import hydra
 
 
