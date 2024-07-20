@@ -67,5 +67,5 @@ class AgentTrainer:
                     self.batch_size)
                 self.model.update(batch, step)
 
-
-            return
+            
+        return

@@ -1,4 +1,4 @@
-gymnasium
+gymnasium==0.29.1+computecanada
 hydra-core==1.3.2
 numpy==2.0.0
 omegaconf==2.3.0+computecanada

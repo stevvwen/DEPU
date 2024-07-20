@@ -5,9 +5,13 @@ defaults:
   - rl_env: inverted_pendulum
   - _self_
 
-global_seed: 42
 
-debug_mode: True
+
+global_seed: 42
+debug_mode: False
+max_steps: 1000000
+
+
 
 device:
   cuda_visible_devices:  "0,1,2,3,4,5,6"
@@ -21,10 +25,7 @@ replay_buffer:
   capacity: 100000
   seed: ${global_seed}
 
-max_steps: 1000000
 batch_size: 256
-
-
 
 load_system_checkpoint:
 mode: train
