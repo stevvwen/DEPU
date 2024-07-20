@@ -32,6 +32,15 @@ def training_td3_for_data(config: DictConfig):
             allow_val_change=True
         )
 
+        # define our custom x axis metric
+        wandb.define_metric("custom_step")
+        wandb.define_metric("epi_count")
+        # define which metrics will be plotted against it
+        wandb.define_metric("Avg Reward", step_metric="custom_step")
+        wandb.define_metric("Epi Reward", step_metric="epi_count")
+
+
+
     trainer= AgentTrainer(config, env= env, model= agent, replay_buffer= replay_buffer)
     trainer.rollout()
 

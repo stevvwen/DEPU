@@ -7,9 +7,8 @@ class AgentTrainer:
     def __init__(self, config, env, model, replay_buffer, eval_mode= False):
         self.env = env
         self.reward_trace = 0  # trace of reward
-        self.cumulative_rewards = deque(maxlen=101)  # cumulative rewards
+        self.reward_window = deque(maxlen=100)  # cumulative rewards
 
-        self.average_reward = [0] * 10
         self.batch_size = config.batch_size
         self.updates = 0
         self.cur_state, _ = env.reset()
@@ -45,13 +44,19 @@ class AgentTrainer:
 
             self.epi_reward += reward
 
+            self.reward_window.append(reward)
+
+            if len(self.reward_window) == 100:
+                wandb.log({"Avg Reward": sum(self.reward_window)/100, "custom_step": step- 100})
+                self.reward_window.popleft()
+
             state = next_state
 
             if terminated or truncated:
 
                 if not self.debug_mode:
                     #wandb.log({"Episode": self.epi_count, "Epi Reward": self.epi_reward})
-                    wandb.log({"Epi Reward": self.epi_reward})
+                    wandb.log({"Epi Reward": self.epi_reward, "epi_count": self.epi_count})
                 # print("Here", self.epi_reward, self.epi_steps, self.total_steps)
                 self.epi_count += 1
                 self.epi_reward = 0
@@ -67,5 +72,5 @@ class AgentTrainer:
                     self.batch_size)
                 self.model.update(batch, step)
 
-            
+        print("Single agent training complete")
         return
