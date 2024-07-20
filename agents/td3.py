@@ -74,8 +74,12 @@ class TD3Agent:
             'value': q.detach().cpu().numpy()[0]
         }
 
-    def update_critic(self, obs, action, reward, next_obs, step):
+    def update_critic(self, obs, action, reward, next_obs, mask, step):
         metrics = dict()
+
+        reward= reward.unsqueeze(1)
+        mask= mask.unsqueeze(1)
+
 
         with torch.no_grad():
             # Select action according to policy and add clipped noise
@@ -87,7 +91,7 @@ class TD3Agent:
             # Compute the target Q value
             target_Q1, target_Q2 = self.critic_target(next_obs, next_action)
             target_Q = torch.min(target_Q1, target_Q2)
-            target_Q = reward + self.discount * target_Q
+            target_Q = reward + mask* self.discount * target_Q
 
         # Get current Q estimates
         current_Q1, current_Q2 = self.critic(obs, action)
@@ -125,7 +129,7 @@ class TD3Agent:
         metrics = dict()
 
         batch= utils.to_float_tensor(batch)
-        obs, action, reward, next_obs, _ = utils.to_torch(
+        obs, action, reward, next_obs, mask = utils.to_torch(
             batch, self.device)
 
         obs = obs.float()
@@ -134,7 +138,7 @@ class TD3Agent:
         metrics['batch_reward'] = reward.mean().item()
 
         # update critic
-        metrics.update(self.update_critic(obs, action, reward, next_obs, step))
+        metrics.update(self.update_critic(obs, action, reward, next_obs, mask, step))
 
         # update actor (delayed)
         if step % self.update_every_steps == 0:
