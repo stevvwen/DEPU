@@ -2,7 +2,7 @@ import wandb
 
 
 class AgentTrainer:
-    def __init__(self, config, env, model, replay_buffer, eval_episode_freq):
+    def __init__(self, config, env, model, replay_buffer):
         self.env = env
         self.reward_trace = 0  # trace of reward
 
@@ -16,7 +16,7 @@ class AgentTrainer:
         self.debug_mode = config.debug_mode
         self.buffer = replay_buffer
         self.model= model
-        self.eval_epi_freq= eval_episode_freq
+        self.eval_epi_freq= config.eval_episode_freq
         self.eval_mode= False
 
         self.cum_reward= 0

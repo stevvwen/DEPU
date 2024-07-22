@@ -13,3 +13,5 @@ agent:
   stddev_schedule: 'linear(1.0,0.1,100000)'
   stddev_clip: 0.3
   discount: 0.99
+
+  eval_episode_freq: 10
