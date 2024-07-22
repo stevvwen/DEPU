@@ -10,4 +10,4 @@ module load python/3.11
 source ../depu/bin/activate
 
 python -m rl_zoo3.train --algo td3 --env Pendulum-v1 --n-timesteps 1000000 --log-interval 10 --eval-freq 1000
-python -m rl.zoo3.scripts/plot_train.py -a td3 -e Pendulum-v1 -y success -f rl-trained-agents/ -w 500 -x steps
+python -m rl.zoo3.scripts/plot_train -a td3 -e Pendulum-v1 -y success -f rl-trained-agents/ -w 500 -x steps

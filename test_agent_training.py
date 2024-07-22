@@ -33,7 +33,7 @@ def training_td3_for_data(config: DictConfig):
         )
 
         # define our custom x axis metric
-        wandb.define_metric("custom_step")
+        wandb.define_metric("custom_step", hidden=True)
         wandb.define_metric("epi_count")
         # define which metrics will be plotted against it
         wandb.define_metric("Avg Reward", step_metric="custom_step")
