@@ -11,6 +11,7 @@ global_seed: 42
 debug_mode: False
 max_steps: 1000000
 
+eval_episode_freq: 10
 
 
 device:
