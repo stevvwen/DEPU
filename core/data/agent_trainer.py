@@ -101,6 +101,8 @@ class AgentTrainer:
 
             eval_epi_steps+= 1
 
+            state= next_state
+
         if not self.debug_mode:
             wandb.log({"Eval Epi Reward": eval_rewards, "eval_epi_count": self.eval_epi_freq})
 
