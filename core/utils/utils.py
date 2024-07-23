@@ -241,7 +241,7 @@ def make_agent(env_dict, cfg):
 def make_env(cfg):
     env= gym.make(cfg.env_name, **cfg.env_kwargs)
     return env, {"obs_shape": env.observation_space.shape, "act_shape": env.action_space.shape,
-                 "act_high": env.action_space.high, "act_low": env.action_space.low}
+                 "act_high": env.action_space.high[0], "act_low": env.action_space.low[0]}
 
 
 
