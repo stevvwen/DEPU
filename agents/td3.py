@@ -16,7 +16,7 @@ import core.utils.utils as utils
 
 
 class TD3Agent:
-    def __init__(self, obs_shape, act_shape, device, lr, hidden_dim,
+    def __init__(self, obs_shape, act_shape, act_limit_low, act_limit_high, device, lr, hidden_dim,
                  critic_target_tau, num_expl_steps, update_every_steps,
                  stddev_schedule, stddev_clip, discount):
 
@@ -28,6 +28,8 @@ class TD3Agent:
         self.stddev_clip = stddev_clip
         self.obs_dim= obs_shape[0]
         self.act_dim = act_shape[0]
+        self.act_limit_low= act_limit_low
+        self.act_limit_high= act_limit_high
         self.hidden_dim = hidden_dim
         self.lr = lr
         #TODO: Check with Sahand
@@ -56,11 +58,14 @@ class TD3Agent:
     def act(self, obs, step, eval_mode):
         obs = torch.as_tensor(obs, device=self.device)
         stddev = utils.schedule(self.stddev_schedule, step)
-        action = self.actor(obs.float().unsqueeze(0)).detach().cpu().numpy()[0]
+
         if not eval_mode:
+            action = self.actor(obs.float().unsqueeze(0)).detach().cpu().numpy()[0]
             action = action + np.random.normal(0, stddev, size=self.act_dim)
             if step < self.num_expl_steps:
-                action = np.random.uniform(-1.0, 1.0, size=self.act_dim)
+                action = np.random.uniform(self.act_limit_low, self.act_limit_high, size=self.act_dim)
+        else:
+            action= self.actor_target(obs.float().unsqueeze(0)).detach().cpu().numpy()[0]
         return action.astype(np.float32)
 
     def observe(self, obs, action):
@@ -86,7 +91,7 @@ class TD3Agent:
             stddev = utils.schedule(self.stddev_schedule, step)
             noise = (torch.randn_like(action) * stddev).clamp(-self.stddev_clip, self.stddev_clip)
 
-            next_action = (self.actor_target(next_obs) + noise).clamp(-1.0, 1.0)
+            next_action = (self.actor_target(next_obs) + noise).clamp(self.act_limit_low, self.act_limit_high)
 
             # Compute the target Q value
             target_Q1, target_Q2 = self.critic_target(next_obs, next_action)

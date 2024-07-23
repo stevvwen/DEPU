@@ -1,3 +1,4 @@
+import torch
 import wandb
 
 
@@ -94,7 +95,8 @@ class AgentTrainer:
         eval_epi_steps= 0
 
         while not (terminated or truncated):
-            action = self.model.act(state, self.model.num_expl_steps, self.eval_mode)  # Select action
+            with torch.no_grad():
+                action = self.model.act(state, self.model.num_expl_steps, False)  # Select action
             next_state, reward, terminated, truncated, info = self.env.step(action)  # Step
 
             eval_rewards+= reward
@@ -104,7 +106,7 @@ class AgentTrainer:
             state= next_state
 
         if not self.debug_mode:
-            wandb.log({"Eval Epi Reward": eval_rewards, "eval_epi_count": self.eval_epi_freq})
+            wandb.log({"Eval Epi Reward": eval_rewards, "eval_epi_count": self.epi_count/self.eval_epi_freq})
 
         print(f"Agent evaluation episode {self.epi_count/self.eval_epi_freq} "
               f"with Episode Reward {eval_rewards} and Episode Length {eval_epi_steps}")

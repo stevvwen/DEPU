@@ -229,16 +229,19 @@ def weight_init(m):
             m.bias.data.fill_(0.0)
 
 
-def make_agent(obs_dim, act_dim, cfg):
-    cfg.obs_shape = obs_dim
-    cfg.act_shape = act_dim
+def make_agent(env_dict, cfg):
+    cfg.obs_shape = env_dict["obs_shape"]
+    cfg.act_shape = env_dict["act_shape"]
+    cfg.act_limit_low= env_dict["act_low"]
+    cfg.act_limit_high= env_dict["act_high"]
     return hydra.utils.instantiate(cfg)
 
 # Util code for env code
 
 def make_env(cfg):
     env= gym.make(cfg.env_name, **cfg.env_kwargs)
-    return env, env.observation_space.shape, env.action_space.shape
+    return env, {"obs_shape": env.observation_space.shape, "act_shape": env.action_space.shape,
+                 "act_high": env.action_space.max, "act_low": env.action_space.low}
 
 
 

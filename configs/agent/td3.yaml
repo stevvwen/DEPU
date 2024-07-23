@@ -4,6 +4,8 @@ agent:
   _target_: agents.td3.TD3Agent
   obs_shape: ??? # to be specified later
   act_shape: ??? # to be specified later
+  act_limit_low: ???
+  act_limit_high: ???
   device: cuda:${device.id}
   lr: 1e-3
   hidden_dim: 256
