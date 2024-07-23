@@ -232,8 +232,8 @@ def weight_init(m):
 def make_agent(env_dict, cfg):
     cfg.obs_shape = env_dict["obs_shape"]
     cfg.act_shape = env_dict["act_shape"]
-    cfg.act_limit_low= env_dict["act_low"]
-    cfg.act_limit_high= env_dict["act_high"]
+    cfg.act_limit_low= float(env_dict["act_low"])
+    cfg.act_limit_high= float(env_dict["act_high"])
     return hydra.utils.instantiate(cfg)
 
 # Util code for env code
