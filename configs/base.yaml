@@ -7,9 +7,9 @@ defaults:
 
 
 
-global_seed: 42
+global_seed: 30
 debug_mode: False
-max_steps: 500000
+max_steps: 100000
 
 eval_eval_interval: 2000
 

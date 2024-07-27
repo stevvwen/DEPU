@@ -39,6 +39,9 @@ class AgentTrainer:
             next_state, reward, terminated, truncated, info = self.env.step(action)  # Step
             self.epi_steps += 1
 
+            self.epi_reward += reward
+
+
             reward= (reward+ 8)/ 8 #TODO: Change this to a more general form
 
             # If the episode is truncated, we still do the update
@@ -46,7 +49,7 @@ class AgentTrainer:
 
             self.buffer.push(state, action, reward, next_state, mask)  # Append transition to memory
 
-            self.epi_reward += reward
+
 
             self.cum_reward+= reward
 
