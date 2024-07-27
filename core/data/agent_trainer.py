@@ -41,7 +41,7 @@ class AgentTrainer:
             self.cum_reward += reward
 
 
-            reward= (reward+ 4)/ 4 #TODO: Change this to a more general form
+            reward= reward/ 16 #TODO: Change this to a more general form
 
             # If the episode is truncated, we still do the update
             mask = 1 if truncated else float(not terminated)
@@ -58,7 +58,6 @@ class AgentTrainer:
                 if not self.debug_mode:
                     #wandb.log({"Episode": self.epi_count, "Epi Reward": self.epi_reward})
                     wandb.log({"Epi Reward": self.epi_reward, "epi_count": self.epi_count})
-                print("Here", self.epi_reward)
                 self.epi_count += 1
                 self.epi_reward = 0
                 state, _ = self.env.reset()
@@ -94,8 +93,8 @@ class AgentTrainer:
             done= False
 
             while not done:
-                with torch.no_grad():
-                    action = self.model.act(state, self.model.num_expl_steps, True)  # Select action
+                
+                action = self.model.act(state, self.model.num_expl_steps, True)  # Select action
 
                 next_state, reward, terminated, truncated, info = self.eval_env.step(action)  # Step
                 done= terminated or truncated
