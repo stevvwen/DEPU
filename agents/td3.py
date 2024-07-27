@@ -65,7 +65,7 @@ class TD3Agent:
             if step < self.num_expl_steps:
                 action = np.random.uniform(self.act_limit_low, self.act_limit_high, size=self.act_dim)
         else:
-            action= self.actor_target(obs.float().unsqueeze(0)).detach().cpu().numpy()[0]
+            action= self.actor(obs.float().unsqueeze(0)).detach().cpu().numpy()[0]
         return action.astype(np.float32)
 
     def observe(self, obs, action):

@@ -32,7 +32,6 @@ class AgentTrainer:
         print(f"Agent training starts")
         state = self.cur_state
 
-        # Rollout a trajectory with 16 samples
         for step in range(self.max_steps):
 
             action = self.model.act(state, step, False)  # Select action
@@ -40,6 +39,7 @@ class AgentTrainer:
             self.epi_steps += 1
 
             self.epi_reward += reward
+            self.cum_reward += reward
 
 
             reward= (reward+ 8)/ 8 #TODO: Change this to a more general form
@@ -49,9 +49,6 @@ class AgentTrainer:
 
             self.buffer.push(state, action, reward, next_state, mask)  # Append transition to memory
 
-
-
-            self.cum_reward+= reward
 
             wandb.log({"Avg Reward": self.cum_reward/(step+ 1), "custom_step": step})
 
