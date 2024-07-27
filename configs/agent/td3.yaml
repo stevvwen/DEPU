@@ -7,11 +7,11 @@ agent:
   act_limit_low: ???
   act_limit_high: ???
   device: cuda:${device.id}
-  lr: 1e-4
+  lr: 1e-3
   hidden_dim: 256
   critic_target_tau: 0.01
   num_expl_steps: 1000
   update_every_steps: 2
-  stddev_schedule: 'linear(1.0,0.1,5000)'
+  stddev_schedule: 'linear(0.2,0.1,1000)'
   stddev_clip: 0.15
-  discount: 0.99
+  discount: 0.98

@@ -61,7 +61,7 @@ class TD3Agent:
 
         if not eval_mode:
             action = self.actor(obs.float().unsqueeze(0)).detach().cpu().numpy()[0]
-            action = action + np.random.normal(0, self.stddev_clip* self.act_limit_high*stddev, size=self.act_dim)
+            action = action + np.random.normal(0, 0.5* self.act_limit_high*stddev, size=self.act_dim)
             if step < self.num_expl_steps:
                 action = np.random.uniform(self.act_limit_low, self.act_limit_high, size=self.act_dim)
         else:
