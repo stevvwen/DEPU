@@ -108,7 +108,7 @@ class AgentTrainer:
         self.eval_count+= 1
 
         if not self.debug_mode:
-            wandb.log({"Eval Reward": avg_score, "eval_epi_count": self.eval_count})
+            wandb.log({"Eval Epi Reward": avg_score, "eval_epi_count": self.eval_count})
 
         print(f"Agent evaluation turn {self.eval_count} "
               f"with Episode Reward {avg_score} and Episode Length {avg_step}")

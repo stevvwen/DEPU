@@ -20,6 +20,7 @@ def training_td3_for_data(config: DictConfig):
         wandb.login()
 
         wandb.finish()
+        print("Project starts")
         run = wandb.init(
             # Set the project where this run will be logged
             project="DEPU",
