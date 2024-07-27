@@ -9,9 +9,9 @@ defaults:
 
 global_seed: 42
 debug_mode: False
-max_steps: 1000000
+max_steps: 500000
 
-eval_episode_freq: 10
+eval_eval_interval: 2000
 
 
 device:
