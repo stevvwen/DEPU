@@ -9,7 +9,7 @@ from core.utils.utils import make_env, make_agent
 @hydra.main(config_path="configs", config_name="base", version_base='1.2')
 def training_td3_for_data(config: DictConfig):
 
-    env, env_dict = make_env(config.rl_env)
+    env, eval_env, env_dict = make_env(config.rl_env)
     agent= make_agent(env_dict, config.agent.agent)
     replay_buffer= hydra.utils.instantiate(config.replay_buffer)
     
@@ -20,7 +20,7 @@ def training_td3_for_data(config: DictConfig):
         wandb.login()
 
         wandb.finish()
-        print("Project starts")
+        
         run = wandb.init(
             # Set the project where this run will be logged
             project="DEPU",
@@ -43,8 +43,8 @@ def training_td3_for_data(config: DictConfig):
         wandb.define_metric("Epi Reward", step_metric="epi_count")
         wandb.define_metric("Eval Epi Reward", step_metric="eval_epi_count")
 
-
-    trainer= AgentTrainer(config, env= env, model= agent, replay_buffer= replay_buffer)
+    print("Project starts")
+    trainer= AgentTrainer(config, env= env, eval_env= eval_env, model= agent, replay_buffer= replay_buffer)
     trainer.rollout()
 
     return

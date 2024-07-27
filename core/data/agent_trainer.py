@@ -3,8 +3,9 @@ import wandb
 
 
 class AgentTrainer:
-    def __init__(self, config, env, model, replay_buffer):
+    def __init__(self, config, env, eval_env, model, replay_buffer):
         self.env = env
+        self.eval_env= eval_env
         self.reward_trace = 0  # trace of reward
 
         self.batch_size = config.batch_size
@@ -16,7 +17,7 @@ class AgentTrainer:
         self.debug_mode = config.debug_mode
         self.buffer = replay_buffer
         self.model= model
-        self.eval_eval_interval= config.eval_eval_interval
+        self.eval_interval= config.eval_interval
         self.eval_mode= False
 
         self.cum_reward= 0
@@ -47,8 +48,8 @@ class AgentTrainer:
 
             self.buffer.push(state, action, reward, next_state, mask)  # Append transition to memory
 
-
-            wandb.log({"Avg Reward": self.cum_reward/(step+ 1), "custom_step": step})
+            if not self.debug_mode:
+                wandb.log({"Avg Reward": self.cum_reward/(step+ 1), "custom_step": step})
 
             state = next_state
 
@@ -60,13 +61,14 @@ class AgentTrainer:
                 print("Here", self.epi_reward)
                 self.epi_count += 1
                 self.epi_reward = 0
-
-            if step % self.eval_eval_interval == 0:
-                self.eval_mode = True
-                self.evaluate()
-                self.eval_mode = False
-
                 state, _ = self.env.reset()
+
+            if step % self.eval_interval == 0:
+                
+                self.evaluate()
+                
+
+                
 
             self.cur_state = state
 
@@ -83,19 +85,19 @@ class AgentTrainer:
 
     def evaluate(self, turns= 3):
 
-
+        self.eval_mode = True
         total_score= 0
         eval_epi_steps = 0
         for _ in range(turns):
-            state, _ = self.env.reset()
+            state, _ = self.eval_env.reset()
 
             done= False
 
             while not done:
                 with torch.no_grad():
-                    action = self.model.act(state, self.model.num_expl_steps, False)  # Select action
+                    action = self.model.act(state, self.model.num_expl_steps, True)  # Select action
 
-                next_state, reward, terminated, truncated, info = self.env.step(action)  # Step
+                next_state, reward, terminated, truncated, info = self.eval_env.step(action)  # Step
                 done= terminated or truncated
                 total_score+= reward
 
@@ -113,4 +115,5 @@ class AgentTrainer:
         print(f"Agent evaluation turn {self.eval_count} "
               f"with Episode Reward {avg_score} and Episode Length {avg_step}")
 
+        self.eval_mode = False
         return avg_score, eval_epi_steps
