@@ -41,7 +41,7 @@ class AgentTrainer:
             self.cum_reward += reward
 
 
-            reward= (reward+ 8)/ 8 #TODO: Change this to a more general form
+            reward= (reward+ 4)/ 4 #TODO: Change this to a more general form
 
             # If the episode is truncated, we still do the update
             mask = 1 if truncated else float(not terminated)
