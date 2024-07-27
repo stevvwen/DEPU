@@ -12,7 +12,6 @@ class AgentTrainer:
         self.cur_state, _ = env.reset()
         self.epi_reward = 0
         self.epi_count = 0
-        self.epi_steps = 0
         self.max_steps = config.max_steps
         self.debug_mode = config.debug_mode
         self.buffer = replay_buffer
@@ -36,7 +35,6 @@ class AgentTrainer:
 
             action = self.model.act(state, step, False)  # Select action
             next_state, reward, terminated, truncated, info = self.env.step(action)  # Step
-            self.epi_steps += 1
 
             self.epi_reward += reward
             self.cum_reward += reward
@@ -59,10 +57,9 @@ class AgentTrainer:
                 if not self.debug_mode:
                     #wandb.log({"Episode": self.epi_count, "Epi Reward": self.epi_reward})
                     wandb.log({"Epi Reward": self.epi_reward, "epi_count": self.epi_count})
-                # print("Here", self.epi_reward, self.epi_steps, self.total_steps)
+                print("Here", self.epi_reward)
                 self.epi_count += 1
                 self.epi_reward = 0
-                self.epi_steps = 0
 
             if step % self.eval_eval_interval == 0:
                 self.eval_mode = True
