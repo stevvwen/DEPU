@@ -40,14 +40,13 @@ class DeterministicActor(nn.Module):
             nn.Linear(hidden_dim, hidden_dim),
             nn.ReLU(inplace=True),
             nn.Linear(hidden_dim, action_dim),
-            nn.Tanh()* self.max_action
         )
 
         self.apply(utils.weight_init)
 
     def forward(self, state):
         a = self.policy(state)
-        return torch.tanh(a)
+        return torch.tanh(a)* self.max_action
 
 
 class Critic(nn.Module):
