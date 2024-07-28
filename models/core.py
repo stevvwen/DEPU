@@ -34,18 +34,18 @@ class DeterministicActor(nn.Module):
         super(DeterministicActor, self).__init__()
 
         self.max_action = max_action
-        self.policy = nn.Sequential(
-            nn.Linear(feature_dim, hidden_dim),
-            nn.ReLU(inplace=True),
-            nn.Linear(hidden_dim, hidden_dim),
-            nn.ReLU(inplace=True),
-            nn.Linear(hidden_dim, action_dim),
-        )
+
+        self.policy1= nn.Linear(feature_dim, hidden_dim)
+        self.policy2= nn.Linear(hidden_dim, hidden_dim)
+        self.policy3= nn.Linear(hidden_dim, action_dim)
 
         self.apply(utils.weight_init)
 
     def forward(self, state):
-        a = self.policy(state)
+        a = F.relu(self.policy1(state), inplace=True)
+        a = F.relu(self.policy2(a), inplace=True)
+        a = self.policy3(a)
+
         return torch.tanh(a)* self.max_action
 
 
@@ -56,35 +56,34 @@ class Critic(nn.Module):
     def __init__(self, feature_dim, action_dim, hidden_dim):
         super().__init__()
 
-        # Q1 architecture
-        self.Q1_net = nn.Sequential(
-            nn.Linear(feature_dim + action_dim, hidden_dim),
-            nn.ReLU(inplace=True),
-            nn.Linear(hidden_dim, hidden_dim),
-            nn.ReLU(inplace=True),
-            nn.Linear(hidden_dim, 1)
-        )
+        self.q1_layer1 = nn.Linear(feature_dim + action_dim, hidden_dim)
+        self.q1_layer2 = nn.Linear(hidden_dim, hidden_dim)
+        self.q1_layer3 = nn.Linear(hidden_dim, 1)
 
-        # Q2 architecture
-        self.Q2_net = nn.Sequential(
-            nn.Linear(feature_dim + action_dim, hidden_dim),
-            nn.ReLU(inplace=True),
-            nn.Linear(hidden_dim, hidden_dim),
-            nn.ReLU(inplace=True),
-            nn.Linear(hidden_dim, 1)
-        )
+        self.q2_layer1 = nn.Linear(feature_dim + action_dim, hidden_dim)
+        self.q2_layer2 = nn.Linear(hidden_dim, hidden_dim)
+        self.q2_layer3 = nn.Linear(hidden_dim, 1)
 
         self.apply(utils.weight_init)
 
     def forward(self, state, action):
         sa = torch.cat([state, action], 1)
 
-        q1 = self.Q1_net(sa)
-        q2 = self.Q2_net(sa)
+        q1 = F.relu(self.q1_layer1(sa), inplace=True)
+        q1 = F.relu(self.q1_layer2(q1), inplace=True)
+        q1 = self.q1_layer3(q1)
+
+        q2 = F.relu(self.q2_layer1(sa), inplace=True)
+        q2 = F.relu(self.q2_layer2(q2), inplace=True)
+        q2 = self.q2_layer3(q2)
+
         return q1, q2
 
     def Q1(self, state, action):
         sa = torch.cat([state, action], 1)
 
-        q1 = self.Q1_net(sa)
+        q1 = F.relu(self.q1_layer1(sa), inplace=True)
+        q1 = F.relu(self.q1_layer2(q1), inplace=True)
+        q1 = self.q1_layer3(q1)
+
         return q1
