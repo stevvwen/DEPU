@@ -36,7 +36,7 @@ class TD3Agent:
         self.discount= discount
 
         # models
-        self.actor = DeterministicActor(self.obs_dim, self.act_dim, hidden_dim).to(self.device)
+        self.actor = DeterministicActor(self.obs_dim, self.act_dim, hidden_dim, self.act_limit_high).to(self.device)
         self.actor_target = copy.deepcopy(self.actor)
 
         self.critic = Critic(self.obs_dim, self.act_dim, hidden_dim).to(self.device)

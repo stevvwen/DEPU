@@ -30,15 +30,17 @@ class DeterministicActor(nn.Module):
     """
     Original TD3 actor.
     """
-    def __init__(self, feature_dim, action_dim, hidden_dim):
+    def __init__(self, feature_dim, action_dim, hidden_dim, max_action):
         super(DeterministicActor, self).__init__()
 
+        self.max_action = max_action
         self.policy = nn.Sequential(
             nn.Linear(feature_dim, hidden_dim),
             nn.ReLU(inplace=True),
             nn.Linear(hidden_dim, hidden_dim),
             nn.ReLU(inplace=True),
-            nn.Linear(hidden_dim, action_dim)
+            nn.Linear(hidden_dim, action_dim),
+            nn.Tanh()* self.max_action
         )
 
         self.apply(utils.weight_init)

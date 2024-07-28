@@ -41,7 +41,7 @@ class AgentTrainer:
             self.cum_reward += reward
 
 
-            reward= reward/ 16 #TODO: Change this to a more general form
+            reward= reward/ 8 #TODO: Change this to a more general form
 
             # If the episode is truncated, we still do the update
             mask = 1 if truncated else float(not terminated)
@@ -111,8 +111,7 @@ class AgentTrainer:
         if not self.debug_mode:
             wandb.log({"Eval Epi Reward": avg_score, "eval_epi_count": self.eval_count})
 
-        print(f"Agent evaluation turn {self.eval_count} "
-              f"with Episode Reward {avg_score} and Episode Length {avg_step}")
+        #print(f"Agent evaluation turn {self.eval_count} " f"with Episode Reward {avg_score} and Episode Length {avg_step}")
 
         self.eval_mode = False
         return avg_score, eval_epi_steps
