@@ -48,14 +48,14 @@ class AgentTrainer:
 
             self.buffer.push(state, action, reward, next_state, mask)  # Append transition to memory
 
-            if not self.debug_mode and not self.eval_mode:
+            if not self.debug_mode and self.eval_mode:
                 wandb.log({"Avg Reward": self.cum_reward/(step+ 1), "custom_step": step})
 
             state = next_state
 
             if terminated or truncated:
 
-                if not self.debug_mode and not self.eval_mode:
+                if not self.debug_mode and self.eval_mode:
                     wandb.log({"Epi Reward": self.epi_reward, "epi_count": self.epi_count})
                 self.epi_count += 1
                 self.epi_reward = 0
@@ -104,7 +104,7 @@ class AgentTrainer:
 
         self.eval_count+= 1
 
-        if not self.debug_mode and not self.eval_mode:
+        if not self.debug_mode and self.eval_mode:
             wandb.log({"Eval Epi Reward": avg_score, "eval_epi_count": self.eval_count})
 
 

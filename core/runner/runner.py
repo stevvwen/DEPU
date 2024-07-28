@@ -1,22 +1,13 @@
 import pdb
 
 import hydra.utils
-import torch
-import pytorch_lightning as pl
-import sys
-import os
-import datetime
-from core.tasks.classification import CFTask
+
 from core.system import *
 import torch
 import torch.distributed as dist
 from core.tasks import tasks
-import time
 
-from pytorch_lightning import Trainer, LightningModule, LightningDataModule
-from pytorch_lightning.callbacks import ModelCheckpoint, StochasticWeightAveraging
-from pytorch_lightning.loggers import TensorBoardLogger
-from pytorch_lightning.strategies import DDPStrategy
+from pytorch_lightning import Trainer
 
 def set_seed(seed):
     pl.seed_everything(seed)
@@ -87,5 +78,3 @@ def train_task_for_data(cfg, **kwargs):
 
     task_result = task.train_for_data()
     return task_result
-
-

@@ -16,7 +16,7 @@ def training_agent(config: DictConfig):
     tmp_name= datetime.datetime.now().strftime('%y%m%d_%H%M%S')
 
     agent_cfg = config.agent.agent
-    if not config.debug_mode and not config.eval_mode:
+    if not config.debug_mode and config.eval_mode:
         wandb.login()
         
         run = wandb.init(
