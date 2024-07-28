@@ -9,4 +9,4 @@ module load python/3.11
 
 source ../depu/bin/activate
 
-python test_agent_training.py
+python rl_agent_training.py
