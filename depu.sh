@@ -9,4 +9,4 @@ module load python/3.11
 
 source ../depu/bin/activate
 
-python rl_agent_training.py
+python task_training.py
