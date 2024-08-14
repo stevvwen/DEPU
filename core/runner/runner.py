@@ -42,7 +42,7 @@ def init_experiment(cfg, **kwargs):
     # set seed
     set_seed(cfg.seed)
     # set device
-    set_device(cfg.device)
+    #set_device(cfg.device)
 
     # set process title
     set_processtitle(cfg)
