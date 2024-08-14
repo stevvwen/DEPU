@@ -238,3 +238,8 @@ param_data/
 data/
 figs/
 logs/
+
+
+################################
+test.py
+test.sh

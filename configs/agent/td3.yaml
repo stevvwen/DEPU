@@ -15,5 +15,3 @@ agent:
   stddev_schedule: 'linear(0.5,0.05,5000)'
   stddev_clip: 0.3
   discount: 0.99
-
-  train_layer: "all"

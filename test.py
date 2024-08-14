@@ -9,5 +9,14 @@ def training_agent(config: DictConfig):
     env, eval_env, env_dict = make_env(config.rl_env)
     agent= make_agent(env_dict, config.agent.agent)
 
-    train_layer = [name for name, module in agent.named_parameters()]
+    train_layer = [name for name, module in agent.actor.named_parameters()]
     print(train_layer)
+    
+    train_layer = [name for name, module in agent.critic.named_parameters()]
+    print(train_layer)
+    
+    
+    
+
+if __name__ == "__main__":
+    training_agent()
