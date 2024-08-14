@@ -1,40 +1,45 @@
-import torch
 import wandb
-
+from core.utils.utils import *
 
 class AgentTrainer:
-    def __init__(self, config, env, eval_env, model, replay_buffer):
-        self.env = env
-        self.eval_env= eval_env
-        self.reward_trace = 0  # trace of reward
+    def __init__(self, config):
 
         self.batch_size = config.batch_size
-        self.updates = 0
-        self.cur_state, _ = env.reset()
-        self.epi_reward = 0
-        self.epi_count = 0
         self.max_steps = config.max_steps
         self.debug_mode = config.debug_mode
-        self.buffer = replay_buffer
-        self.model= model
         self.eval_interval= config.eval_interval
         self.eval_mode= config.eval_mode
 
-        self.cum_reward= 0
+        self.setup_task(config)
+        self.reset_trainer(config)
 
-        self.avg_epi_reward= 0
+    def setup_task(self, config):
+        self.env, self.eval_env, self.env_dict = make_env(config.rl_env)
+        self.agent = make_agent(self.env_dict, config.agent.agent)
+        self.buffer = hydra.utils.instantiate(config.replay_buffer)
 
-        self.eval_count= 0
+    def reset_trainer(self, config):
+
+        self.updates = 0
+        self.epi_reward = 0
+        self.epi_count = 0
+        self.cum_reward = 0
+        self.avg_epi_reward = 0
+        self.eval_count = 0
+
+        self.agent= make_agent(self.env_dict, config.agent.agent)
+        self.cur_state, _ = self.env.reset()
+
+
 
     def rollout(self):
-
 
         print(f"Agent training starts")
         state = self.cur_state
 
         for step in range(self.max_steps):
 
-            action = self.model.act(state, step, False)  # Select action
+            action = self.agent.act(state, step, False)  # Select action
             next_state, reward, terminated, truncated, info = self.env.step(action)  # Step
 
             self.epi_reward += reward
@@ -68,14 +73,14 @@ class AgentTrainer:
 
             self.cur_state = state
 
-            if len(self.buffer) < self.batch_size and step< self.model.num_expl_steps:
+            if len(self.buffer) < self.batch_size and step< self.agent.num_expl_steps:
                 continue
             else:
                 batch = self.buffer.sample(
                     self.batch_size)
-                self.model.update(batch, step)
+                self.agent.update(batch, step)
 
-        print("Single agent training complete")
+
         return
 
 
@@ -90,7 +95,7 @@ class AgentTrainer:
 
             while not done:
                 
-                action = self.model.act(state, self.model.num_expl_steps, True)  # Select action
+                action = self.agent.act(state, self.agent.num_expl_steps, True)  # Select action
 
                 next_state, reward, terminated, truncated, info = self.eval_env.step(action)  # Step
                 done= terminated or truncated

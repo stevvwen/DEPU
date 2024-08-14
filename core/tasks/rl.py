@@ -1,66 +1,70 @@
-import pdb
 
+import shutil
 import hydra.utils
-
 from .base_task import  BaseTask
-from core.data.vision_dataset import VisionData
-from core.data.parameters import PData
-from core.utils.utils import *
-import torch.nn as nn
-import datetime
 from core.utils import *
 import glob
-import omegaconf
 import json
+
+
+
+import datetime
+import wandb
+from core.data.agent_trainer import AgentTrainer
+from core.runner.runner import *
+
+import math
+
+# tmp
+from core.utils.utils import *
+
+
 
 
 class RLTask(BaseTask):
     def __init__(self, config, **kwargs):
         super(RLTask, self).__init__(config, **kwargs)
 
+        self.tmp_time= datetime.datetime.now().strftime('%y%m%d_%H%M%S')
+
+        self.trainer= AgentTrainer(config)
+
+        self.agent_config= config.agent.agent
+        self.num_agents= config.num_agents
+
+        self.visualization = not config.debug_mode and config.eval_mode
+        self.plot(self.agent_config)
+
     # override the abstract method in base_task.py
-    def set_param_data(self):
-        param_data = PData(self.cfg.param)
-        self.model = param_data.get_model()
-        self.train_layer = param_data.get_train_layer()
-        return param_data
+    def plot(self, agent_cfg):
+        if self.visualization:
+            wandb.login()
+
+            run = wandb.init(
+                # Set the project where this run will be logged
+                project="DEPU",
+                name= self.tmp_time,
+                config={"learning rate": agent_cfg.lr,
+                        "observation size": agent_cfg.obs_shape,
+                        "action size": agent_cfg.act_shape,
+                        "hidden size": agent_cfg.hidden_dim,
+                        },
+                allow_val_change=True
+            )
+
+            # define our custom x axis metric
+            wandb.define_metric("custom_step", hidden=True)
+            wandb.define_metric("epi_count", hidden=True)
+            wandb.define_metric("eval_epi_count", hidden=True)
+
+            # define which metrics will be plotted against it
+            wandb.define_metric("Avg Reward", step_metric="custom_step")
+            wandb.define_metric("Epi Reward", step_metric="epi_count")
+            wandb.define_metric("Eval Epi Reward", step_metric="eval_epi_count")
 
     def test_g_model(self, input):
-        net = self.model
-        train_layer = self.train_layer
-        param = input
-        target_num = 0
-        for name, module in net.named_parameters():
-            if name in train_layer:
-                target_num += torch.numel(module)
-        params_num = torch.squeeze(param).shape[0]  # + 30720
-        assert (target_num == params_num)
-        param = torch.squeeze(param)
-        model = partial_reverse_tomodel(param, net, train_layer).to(param.device)
 
-        model.eval()
-        test_loss = 0
-        correct = 0
-        total = 0
-
-        output_list = []
-
-        with torch.no_grad():
-            for data, target in self.test_loader:
-                data, target = data.cuda(), target.cuda()
-                output = model(data)
-                target = target.to(torch.int64)
-                test_loss += F.cross_entropy(output, target, size_average=False).item()  # sum up batch loss
-
-                total += data.shape[0]
-                pred = torch.max(output, 1)[1]
-                output_list += pred.cpu().numpy().tolist()
-                correct += pred.eq(target.view_as(pred)).sum().item()
-
-        test_loss /= total
-        acc = 100. * correct / total
-        del model
-        return acc, test_loss, output_list
+        return 0, 0, 0
 
     def val_g_model(self, input):
         net = self.model
@@ -101,55 +105,37 @@ class RLTask(BaseTask):
 
     # override the abstract method in base_task.py, you obtain the model data for generation
     def train_for_data(self):
-        net = self.build_model()
-        optimizer = self.build_optimizer(net)
-        criterion = nn.CrossEntropyLoss()
-        scheduler = hydra.utils.instantiate(self.cfg.lr_scheduler, optimizer)
-        epoch = self.cfg.epoch
-        save_num = self.cfg.save_num_model
-        all_epoch = epoch + save_num
 
-        best_acc = 0
-        train_loader = self.train_loader
-        eval_loader = self.eval_loader
-        train_layer = self.cfg.train_layer
 
-        if train_layer == 'all':
-            train_layer = [name for name, module in net.named_parameters()]
+        if self.agent_config.train_layer == 'all':
+            train_layer = [name for name, module in self.trainer.agent.named_parameters()]
+        else:
+            train_layer = self.agent_config.train_layer
 
         data_path = getattr(self.cfg, 'save_root', 'param_data')
 
-        tmp_path = os.path.join(data_path, 'tmp_{}'.format(datetime.datetime.now().strftime('%Y-%m-%d_%H-%M-%S')))
-        # tmp_path = os.path.join(data_path, 'tmp')
+        tmp_path = os.path.join(data_path, 'tmp_{}'.format(self.tmp_time))
         final_path = os.path.join(data_path, self.cfg.data.dataset)
 
         os.makedirs(tmp_path, exist_ok=True)
         os.makedirs(final_path, exist_ok=True)
 
+        save_model_avg_score = []
+        highest_avg_score= -math.inf
 
-        save_model_accs = []
-        parameters = []
 
-        net = net.cuda()
-        for i in range(0, all_epoch):
-            self.train(net, criterion, optimizer, train_loader, i)
-            acc = self.test(net, criterion, eval_loader)
-            best_acc = max(acc, best_acc)
+        for i in range(0, self.num_agents):
+            self.trainer.rollout()
+            avg_score, eval_epi_steps= self.trainer.evaluate()
+            highest_avg_score = max(avg_score, highest_avg_score)
 
-            if i == (epoch - 1):
-                print("saving the model")
-                torch.save(net, os.path.join(tmp_path, "whole_model.pth"))
-                fix_partial_model(train_layer, net)
-                parameters = []
-            if i >= epoch:
-                parameters.append(state_part(train_layer, net))
-                save_model_accs.append(acc)
-                if len(parameters) == 10 or i == all_epoch - 1:
-                    torch.save(parameters, os.path.join(tmp_path, "p_data_{}.pt".format(i)))
-                    parameters = []
+            save_model_avg_score.append(avg_score)
+            torch.save(state_part(train_layer, self.trainer.agent),
+                       os.path.join(tmp_path, "p_data_{}.pt".format(i)))
 
-            scheduler.step()
-        print("training over")
+            print(f"Agent {i} training complete")
+
+        print("Training complete")
 
         pdata = []
         for file in glob.glob(os.path.join(tmp_path, "p_data_*.pt")):
@@ -175,66 +161,22 @@ class RLTask(BaseTask):
             'std': std.cpu(),
             'model': torch.load(os.path.join(tmp_path, "whole_model.pth")),
             'train_layer': train_layer,
-            'performance': save_model_accs,
+            'performance': save_model_avg_score,
             'cfg': config_to_dict(self.cfg)
         }
 
         torch.save(state_dic, os.path.join(final_path, "data.pt"))
         json_state = {
             'cfg': config_to_dict(self.cfg),
-            'performance': save_model_accs
+            'performance': save_model_avg_score
 
         }
         json.dump(json_state, open(os.path.join(final_path, "config.json"), 'w'))
 
         # copy the code file(the file) in state_save_dir
-        shutil.copy(os.path.abspath(__file__), os.path.join(final_path,
-                                                            os.path.basename(__file__)))
+        #shutil.copy(os.path.abspath(__file__), os.path.join(final_path, os.path.basename(__file__)))
 
         # delete the tmp_path
         shutil.rmtree(tmp_path)
         print("data process over")
         return {'save_path': final_path}
-
-    def train(self, net, criterion, optimizer, trainloader, epoch):
-        print('\nEpoch: %d' % epoch)
-        net.train()
-        train_loss = 0
-        correct = 0
-        total = 0
-        for batch_idx, (inputs, targets) in enumerate(trainloader):
-            inputs, targets = inputs.cuda(), targets.cuda()
-            optimizer.zero_grad()
-            outputs = net(inputs)
-            loss = criterion(outputs, targets)
-            loss.backward()
-            optimizer.step()
-
-            train_loss += loss.item()
-            _, predicted = outputs.max(1)
-            total += targets.size(0)
-            correct += predicted.eq(targets).sum().item()
-
-            progress_bar(batch_idx, len(trainloader), 'Loss: %.3f | Acc: %.3f%% (%d/%d)'
-                         % (train_loss / (batch_idx + 1), 100. * correct / total, correct, total))
-
-    def test(self, net, criterion, testloader):
-        global best_acc
-        net.eval()
-        test_loss = 0
-        correct = 0
-        total = 0
-        with torch.no_grad():
-            for batch_idx, (inputs, targets) in enumerate(testloader):
-                inputs, targets = inputs.cuda(), targets.cuda()
-                outputs = net(inputs)
-                loss = criterion(outputs, targets)
-
-                test_loss += loss.item()
-                _, predicted = outputs.max(1)
-                total += targets.size(0)
-                correct += predicted.eq(targets).sum().item()
-
-                progress_bar(batch_idx, len(testloader), 'Loss: %.3f | Acc: %.3f%% (%d/%d)'
-                             % (test_loss / (batch_idx + 1), 100. * correct / total, correct, total))
-            return 100. * correct / total
