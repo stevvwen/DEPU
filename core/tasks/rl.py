@@ -30,6 +30,8 @@ class RLTask(BaseTask):
         self.trainer= AgentTrainer(config)
 
         self.agent_config= config.agent.agent
+        self.cfg= config
+
         self.num_agents= config.num_agents
 
         self.visualization = not config.debug_mode and config.eval_mode
@@ -67,50 +69,19 @@ class RLTask(BaseTask):
         return 0, 0, 0
 
     def val_g_model(self, input):
-        net = self.model
-        train_layer = self.train_layer
-        param = input
-        target_num = 0
-        for name, module in net.named_parameters():
-            if name in train_layer:
-                target_num += torch.numel(module)
-        params_num = torch.squeeze(param).shape[0]  # + 30720
-        assert (target_num == params_num)
-        param = torch.squeeze(param)
-        model = partial_reverse_tomodel(param, net, train_layer).to(param.device)
-
-        model.eval()
-        test_loss = 0
-        correct = 0
-        total = 0
-
-        output_list = []
-
-        with torch.no_grad():
-            for data, target in self.train_loader:
-                data, target = data.cuda(), target.cuda()
-                output = model(data)
-                target = target.to(torch.int64)
-                test_loss += F.cross_entropy(output, target, size_average=False).item()  # sum up batch loss
-
-                total += data.shape[0]
-                pred = torch.max(output, 1)[1]
-                output_list += pred.cpu().numpy().tolist()
-                correct += pred.eq(target.view_as(pred)).sum().item()
-
-        test_loss /= total
-        acc = 100. * correct / total
-        del model
-        return acc, test_loss, output_list
+        #TODO:
+        pass
 
     # override the abstract method in base_task.py, you obtain the model data for generation
     def train_for_data(self):
 
 
-        if self.agent_config.train_layer == 'all':
-            train_layer = [name for name, module in self.trainer.agent.named_parameters()]
+        if self.cfg.train_layer == 'all':
+            actor_train_layer = [name for name, module in self.trainer.agent.actor.named_parameters()]
+            critic_train_layer = [name for name, module in self.trainer.agent.critic.named_parameters()]
         else:
-            train_layer = self.agent_config.train_layer
+            actor_train_layer = self.agent_config.train_layer
+            critic_train_layer = self.agent_config.train_layer
 
         data_path = getattr(self.cfg, 'save_root', 'param_data')
 
@@ -130,12 +101,16 @@ class RLTask(BaseTask):
             highest_avg_score = max(avg_score, highest_avg_score)
 
             save_model_avg_score.append(avg_score)
-            torch.save(state_part(train_layer, self.trainer.agent),
+            torch.save(extract_agent_params(actor_train_layer, critic_train_layer, self.trainer.agent),
                        os.path.join(tmp_path, "p_data_{}.pt".format(i)))
 
             print(f"Agent {i} training complete")
 
         print("Training complete")
+
+        train_layer= {}
+        train_layer.update(actor_train_layer)
+        train_layer.update(critic_train_layer)
 
         pdata = []
         for file in glob.glob(os.path.join(tmp_path, "p_data_*.pt")):
@@ -169,8 +144,8 @@ class RLTask(BaseTask):
         json_state = {
             'cfg': config_to_dict(self.cfg),
             'performance': save_model_avg_score
-
         }
+
         json.dump(json_state, open(os.path.join(final_path, "config.json"), 'w'))
 
         # copy the code file(the file) in state_save_dir

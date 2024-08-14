@@ -1,5 +1,5 @@
 defaults:
-  - task: cifar100
+  - task: rl
   - system: autoencoder
   - agent: td3
   - rl_env: inverted_pendulum

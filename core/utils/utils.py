@@ -15,6 +15,13 @@ def state_part(train_list, net):
             part_param[name] = weights.detach().cpu()
     return part_param
 
+def extract_agent_params(actor_train_layer, critic_train_layer, agent):
+    params= {}
+    params.update(state_part(actor_train_layer, agent.actor))
+    params.update(state_part(critic_train_layer, agent.critic))
+    return params
+
+
 
 def fix_partial_model(train_list, net):
     print(train_list)
