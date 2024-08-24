@@ -6,7 +6,7 @@ agent:
   act_shape: ??? # to be specified later
   act_limit_low: ???
   act_limit_high: ???
-  device: cuda:${device.id}
+  device: ???
   lr: 3e-4
   hidden_dim: 256
   critic_target_tau: 0.01

@@ -5,7 +5,7 @@ class AgentTrainer:
     def __init__(self, config):
 
         self.batch_size = config.batch_size
-        self.max_steps = config.max_steps
+        self.max_steps = config.rl_env.max_steps
         self.debug_mode = config.debug_mode
         self.eval_interval= config.eval_interval
         self.eval_mode= config.eval_mode
@@ -15,6 +15,7 @@ class AgentTrainer:
 
     def setup_task(self, config):
         self.env, self.eval_env, self.env_dict = make_env(config.rl_env)
+        config.agent.agent.device = "cuda:" + str(config.device.id)
         self.agent = make_agent(self.env_dict, config.agent.agent)
         self.buffer = hydra.utils.instantiate(config.replay_buffer)
 
@@ -27,6 +28,7 @@ class AgentTrainer:
         self.avg_epi_reward = 0
         self.eval_count = 0
 
+        config.agent.agent.device = "cuda:" + str(config.device.id)
         self.agent= make_agent(self.env_dict, config.agent.agent)
         self.cur_state, _ = self.env.reset()
 

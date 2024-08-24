@@ -1,8 +1,6 @@
 defaults:
   - task: rl
   - system: autoencoder
-  - agent: td3
-  - rl_env: inverted_pendulum
   - _self_
 
 

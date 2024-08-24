@@ -2,12 +2,14 @@ name: rl
 
 
 defaults:
-  - agent: td3
-  - rl_env: inverted_pendulum
+  - agent: ../../agent/td3
+  - rl_env: ../../rl_env/inverted_pendulum
   - _self_
 
+seed: 30
 
-debug_mode: False
+
+debug_mode: True
 eval_mode: False
 
 
@@ -24,9 +26,11 @@ device:
 replay_buffer:
   _target_: core.utils.replay_memory.ReplayMemory
   capacity: 100000
-  seed: ${global_seed}
+  seed: ${seed}
 
 batch_size: 256
+
+max_steps: ???
 
 save_root: "param_data"
 
