@@ -39,7 +39,7 @@ train_layer: "all"
 ########################
 
 data:
-  data_root: data/cifar10
+  data_root: data/rl
   dataset: ???
   batch_size: 64
   num_workers: 1

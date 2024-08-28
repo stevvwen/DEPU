@@ -1,7 +1,7 @@
 # Configurations for Inverted pendulum
 
 
-env_name: 'Pendulum-v1'
+env_name: 'Pendulum'
 
 env_kwargs:
   g: 10.0

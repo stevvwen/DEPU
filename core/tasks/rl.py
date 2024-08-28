@@ -27,7 +27,7 @@ class RLTask(BaseTask):
         self.tmp_time= datetime.datetime.now().strftime('%y%m%d_%H%M%S')
 
         self.trainer= AgentTrainer(config)
-        print("################################")
+
         self.agent_config= config.agent.agent
 
 
@@ -36,7 +36,7 @@ class RLTask(BaseTask):
 
 
         # Specify the rl env to be used
-        rl_env = config.rl_env.split("/")[-1]
+        rl_env = str(config.rl_env.env_name)
         self.cfg.data.dataset= rl_env
 
         self.num_agents= config.num_agents
