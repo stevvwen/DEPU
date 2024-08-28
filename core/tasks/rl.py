@@ -64,8 +64,34 @@ class RLTask(BaseTask):
             wandb.define_metric("Eval Epi Reward", step_metric="eval_epi_count")
 
     def test_g_model(self, input):
+        param= input
+        turns= 5
 
-        return 0, 0, 0
+        test_agent, test_env = self.trainer.set_up_test(config= self.cfg)
+
+        test_agent= partial_reverse_tomodel(param, test_agent, self.cfg.train_layer).to(param.device)
+
+        total_score = 0
+        test_epi_steps = 0
+        for _ in range(turns):
+            state, _ = test_env.reset()
+
+            done = False
+
+            while not done:
+                action = test_agent.act(state, test_agent.num_expl_steps, True)  # Select action
+
+                next_state, reward, terminated, truncated, info = test_env.step(action)  # Step
+                done = terminated or truncated
+                total_score += reward
+
+                test_epi_steps += 1
+                state = next_state
+
+        avg_score = total_score / turns
+        avg_step = test_epi_steps / turns
+
+        return avg_score, avg_step
 
     def val_g_model(self, input):
         #TODO:

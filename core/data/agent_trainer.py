@@ -10,12 +10,14 @@ class AgentTrainer:
         self.eval_interval= config.eval_interval
         self.eval_mode= config.eval_mode
 
+        self.device= "cuda:" + str(config.device.id)
+
         self.setup_task(config)
         self.reset_trainer(config)
 
     def setup_task(self, config):
         self.env, self.eval_env, self.env_dict = make_env(config.rl_env)
-        config.agent.agent.device = "cuda:" + str(config.device.id)
+        config.agent.agent.device = self.device
         self.agent = make_agent(self.env_dict, config.agent.agent)
         self.buffer = hydra.utils.instantiate(config.replay_buffer)
 
@@ -28,10 +30,14 @@ class AgentTrainer:
         self.avg_epi_reward = 0
         self.eval_count = 0
 
-        config.agent.agent.device = "cuda:" + str(config.device.id)
+        config.agent.agent.device = self.device
         self.agent= make_agent(self.env_dict, config.agent.agent)
         self.cur_state, _ = self.env.reset()
 
+    def set_up_test(self, config):
+        config.agent.agent.device = self.device
+        self.eval_env.reset()
+        return make_agent(self.env_dict, config.agent.agent), self.eval_env
 
 
     def rollout(self):
@@ -115,4 +121,4 @@ class AgentTrainer:
             wandb.log({"Eval Epi Reward": avg_score, "eval_epi_count": self.eval_count})
 
 
-        return avg_score, eval_epi_steps
+        return avg_score, avg_step
