@@ -35,3 +35,11 @@ max_steps: ???
 save_root: "param_data"
 
 train_layer: "all"
+
+########################
+
+data:
+  data_root: data/cifar10
+  dataset: ???
+  batch_size: 64
+  num_workers: 1

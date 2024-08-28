@@ -14,7 +14,7 @@ mode: train
 
 process_title: p-diff
 
-output_dir: outputs/cifar100
+output_dir: outputs/rl
 
 hydra:
   output_subdir: config
