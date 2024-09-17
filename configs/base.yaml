@@ -9,7 +9,6 @@ seed: 30
 
 
 #######################################
-load_system_checkpoint:
 mode: train
 
 process_title: p-diff
