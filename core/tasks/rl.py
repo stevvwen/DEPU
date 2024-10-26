@@ -30,10 +30,7 @@ class RLTask(BaseTask):
 
         self.agent_config= config.agent.agent
 
-
         self.cfg= config
-
-
 
         # Specify the rl env to be used
         rl_env = str(config.rl_env.env_name)
