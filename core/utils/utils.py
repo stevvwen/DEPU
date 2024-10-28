@@ -40,11 +40,9 @@ def partial_reverse_tomodel(flattened, model, train_layer):
             layer_idx += pa_length
     return model, layer_idx
 
-def replace_rl_agent(flattened, model, actor_train_layer, critic_train_layer, actor_num, critic_num):
+def replace_agent_policy(flattened, model, actor_train_layer, actor_num, critic_num):
 
     model.actor, actor_num_param = partial_reverse_tomodel(flattened[:actor_num], model.actor, actor_train_layer)
-
-    model.critic, critic_num_param = partial_reverse_tomodel(flattened[actor_num:actor_num+critic_num], model.critic, critic_train_layer)
 
     assert actor_num_param == actor_num
     assert critic_num_param == critic_num

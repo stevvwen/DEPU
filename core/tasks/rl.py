@@ -97,7 +97,7 @@ class RLTask(BaseTask):
 
         param= torch.squeeze(param)
 
-        test_agent= partial_reverse_tomodel(param, test_agent, self.training_layers).to(param.device)
+        test_agent= replace_agent_policy(param, test_agent, self.actor_training_layers, actor_num, critic_num).to(param.device)
 
         total_score = 0
         test_epi_steps = 0
@@ -178,7 +178,7 @@ class RLTask(BaseTask):
             'mean': mean.cpu(),
             'std': std.cpu(),
             'model': torch.load(os.path.join(tmp_path, "whole_model.pth")),
-            'train_layer': self.training_layers,
+            'train_layer': self.actor_training_layers + self.critic_training_layers,
             'performance': save_model_avg_score,
             'cfg': config_to_dict(self.cfg)
         }
