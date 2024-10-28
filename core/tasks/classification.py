@@ -42,7 +42,7 @@ class CFTask(BaseTask):
         params_num = torch.squeeze(param).shape[0]  # + 30720
         assert (target_num == params_num)
         param = torch.squeeze(param)
-        model = partial_reverse_tomodel(param, net, train_layer).to(param.device)
+        model, _ = partial_reverse_tomodel(param, net, train_layer).to(param.device)
 
         model.eval()
         test_loss = 0
@@ -79,7 +79,7 @@ class CFTask(BaseTask):
         params_num = torch.squeeze(param).shape[0]  # + 30720
         assert (target_num == params_num)
         param = torch.squeeze(param)
-        model = partial_reverse_tomodel(param, net, train_layer).to(param.device)
+        model, _ = partial_reverse_tomodel(param, net, train_layer).to(param.device)
 
         model.eval()
         test_loss = 0

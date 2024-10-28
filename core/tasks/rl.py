@@ -41,6 +41,13 @@ class RLTask(BaseTask):
         self.visualization = not config.debug_mode and config.eval_mode
         self.plot(self.agent_config)
 
+        if self.cfg.train_layer== 'all':
+            self.actor_training_layers= [name for name, module in self.trainer.agent.actor.named_parameters()]
+            self.critic_training_layers= [name for name, module in self.trainer.agent.critic.named_parameters()]
+        else:
+            self.actor_training_layers= self.cfg.train_layer.actor
+            self.critic_training_layers= self.cfg.train_layer.critic
+
     # override the abstract method in base_task.py
     def plot(self, agent_cfg):
         if self.visualization:
@@ -74,7 +81,23 @@ class RLTask(BaseTask):
 
         test_agent, test_env = self.trainer.set_up_test(config= self.cfg)
 
-        test_agent= partial_reverse_tomodel(param, test_agent, self.cfg.train_layer).to(param.device)
+        # check the number of parameters
+        actor_num= 0
+        for name, module in test_agent.actor.named_parameters():
+            if name in self.actor_training_layers:
+                actor_num += torch.numel(module)
+
+        critic_num= 0
+        for name, module in test_agent.critic.named_parameters():
+            if name in self.critic_training_layers:
+                critic_num += torch.numel(module)
+
+        params_num = torch.squeeze(param).shape[0]
+        assert (actor_num+ critic_num == params_num)
+
+        param= torch.squeeze(param)
+
+        test_agent= partial_reverse_tomodel(param, test_agent, self.training_layers).to(param.device)
 
         total_score = 0
         test_epi_steps = 0
@@ -96,7 +119,7 @@ class RLTask(BaseTask):
         avg_score = total_score / turns
         avg_step = test_epi_steps / turns
 
-        return avg_score, avg_step
+        return avg_score, avg_step, _
 
     def val_g_model(self, input):
         #TODO:
@@ -104,14 +127,6 @@ class RLTask(BaseTask):
 
     # override the abstract method in base_task.py, you obtain the model data for generation
     def train_for_data(self):
-
-
-        if self.cfg.train_layer == 'all':
-            actor_train_layer = [name for name, module in self.trainer.agent.actor.named_parameters()]
-            critic_train_layer = [name for name, module in self.trainer.agent.critic.named_parameters()]
-        else:
-            actor_train_layer = self.agent_config.train_layer
-            critic_train_layer = self.agent_config.train_layer
 
         data_path = getattr(self.cfg, 'save_root', 'param_data')
 
@@ -126,21 +141,19 @@ class RLTask(BaseTask):
 
 
         for i in range(0, self.num_agents):
+            self.trainer.reset_trainer()
             self.trainer.rollout()
             avg_score, eval_epi_steps= self.trainer.evaluate()
             highest_avg_score = max(avg_score, highest_avg_score)
 
             save_model_avg_score.append(avg_score)
-            torch.save(extract_agent_params(actor_train_layer, critic_train_layer, self.trainer.agent),
+            torch.save(extract_agent_params(self.training_layers, self.trainer.agent),
                        os.path.join(tmp_path, "p_data_{}.pt".format(i)))
 
             print(f"Agent {i} training complete")
 
         print("Training complete")
 
-        train_layer= {}
-        train_layer.update(actor_train_layer)
-        train_layer.update(critic_train_layer)
 
         pdata = []
         for file in glob.glob(os.path.join(tmp_path, "p_data_*.pt")):
@@ -148,7 +161,7 @@ class RLTask(BaseTask):
             for buffer in buffers:
                 param = []
                 for key in buffer.keys():
-                    if key in train_layer:
+                    if key in self.training_layers:
                         param.append(buffer[key].data.reshape(-1))
                 param = torch.cat(param, 0)
                 pdata.append(param)
@@ -165,7 +178,7 @@ class RLTask(BaseTask):
             'mean': mean.cpu(),
             'std': std.cpu(),
             'model': torch.load(os.path.join(tmp_path, "whole_model.pth")),
-            'train_layer': train_layer,
+            'train_layer': self.training_layers,
             'performance': save_model_avg_score,
             'cfg': config_to_dict(self.cfg)
         }

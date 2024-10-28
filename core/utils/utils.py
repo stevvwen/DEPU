@@ -15,10 +15,10 @@ def state_part(train_list, net):
             part_param[name] = weights.detach().cpu()
     return part_param
 
-def extract_agent_params(actor_train_layer, critic_train_layer, agent):
+def extract_agent_params(training_layers, agent):
     params= {}
-    params.update(state_part(actor_train_layer, agent.actor))
-    params.update(state_part(critic_train_layer, agent.critic))
+    params.update(state_part(training_layers, agent.actor))
+    params.update(state_part(training_layers, agent.critic))
     return params
 
 
@@ -38,6 +38,17 @@ def partial_reverse_tomodel(flattened, model, train_layer):
             pa.data = flattened[layer_idx:layer_idx + pa_length].reshape(pa_shape)
             pa.data.to(flattened.device)
             layer_idx += pa_length
+    return model, layer_idx
+
+def replace_rl_agent(flattened, model, actor_train_layer, critic_train_layer, actor_num, critic_num):
+
+    model.actor, actor_num_param = partial_reverse_tomodel(flattened[:actor_num], model.actor, actor_train_layer)
+
+    model.critic, critic_num_param = partial_reverse_tomodel(flattened[actor_num:actor_num+critic_num], model.critic, critic_train_layer)
+
+    assert actor_num_param == actor_num
+    assert critic_num_param == critic_num
+
     return model
 
 
@@ -49,7 +60,7 @@ def test_generated_partial(net, param, train_layer, dataloader, fea_path=None):
     params_num = torch.squeeze(param).shape[0]  # + 30720
     assert (target_num == params_num)
     param = torch.squeeze(param)
-    net = partial_reverse_tomodel(param, net, train_layer).to(param.device)
+    net, _ = partial_reverse_tomodel(param, net, train_layer).to(param.device)
     acc, loss, output_list = test(net, dataloader, fea_path=fea_path)
     del net
     return acc, output_list
@@ -248,6 +259,3 @@ def make_env(cfg):
     eval_env= gym.make(cfg.env_name, **cfg.env_kwargs)
     return env, eval_env, {"obs_shape": env.observation_space.shape, "act_shape": env.action_space.shape,
                  "act_high": env.action_space.high[0], "act_low": env.action_space.low[0]}
-
-
-

@@ -12,8 +12,10 @@ class AgentTrainer:
 
         self.device= "cuda:" + str(config.device.id)
 
+        self.config= config
+
         self.setup_task(config)
-        self.reset_trainer(config)
+        self.reset_trainer()
 
     def setup_task(self, config):
         self.env, self.eval_env, self.env_dict = make_env(config.rl_env)
@@ -21,7 +23,9 @@ class AgentTrainer:
         self.agent = make_agent(self.env_dict, config.agent.agent)
         self.buffer = hydra.utils.instantiate(config.replay_buffer)
 
-    def reset_trainer(self, config):
+    def reset_trainer(self):
+
+        config= self.config
 
         self.updates = 0
         self.epi_reward = 0
@@ -32,10 +36,10 @@ class AgentTrainer:
 
         config.agent.agent.device = self.device
         self.agent= make_agent(self.env_dict, config.agent.agent)
+        self.buffer = hydra.utils.instantiate(config.replay_buffer)
         self.cur_state, _ = self.env.reset()
 
     def set_up_test(self, config):
-        config.agent.agent.device = self.device
         self.eval_env.reset()
         return make_agent(self.env_dict, config.agent.agent), self.eval_env
 
@@ -87,12 +91,11 @@ class AgentTrainer:
                 batch = self.buffer.sample(
                     self.batch_size)
                 self.agent.update(batch, step)
-
-
         return
 
 
     def evaluate(self, turns= 3):
+
 
         total_score= 0
         eval_epi_steps = 0
