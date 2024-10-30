@@ -244,3 +244,4 @@ logs/
 test.py
 test.sh
 rl_agent_training.py
+log_experiments/

@@ -39,7 +39,7 @@ class RLTask(BaseTask):
         self.num_agents= config.num_agents
 
         self.visualization = not config.debug_mode and config.eval_mode
-        self.plot(self.agent_config)
+        
 
         if self.cfg.train_layer== 'all':
             self.actor_training_layers= [name for name, module in self.trainer.agent.actor.named_parameters()]
@@ -96,6 +96,8 @@ class RLTask(BaseTask):
         assert (actor_num+ critic_num == params_num)
 
         param= torch.squeeze(param)
+        
+        #TODO: Now we only replace the policy of the agent
 
         test_agent= replace_agent_policy(param, test_agent, self.actor_training_layers, actor_num, critic_num).to(param.device)
 
@@ -141,13 +143,14 @@ class RLTask(BaseTask):
 
 
         for i in range(0, self.num_agents):
+            self.plot(self.agent_config)
             self.trainer.reset_trainer()
             self.trainer.rollout()
             avg_score, eval_epi_steps= self.trainer.evaluate()
             highest_avg_score = max(avg_score, highest_avg_score)
 
             save_model_avg_score.append(avg_score)
-            torch.save(extract_agent_params(self.training_layers, self.trainer.agent),
+            torch.save(extract_agent_params(self.actor_training_layers, self.critic_training_layers, self.trainer.agent),
                        os.path.join(tmp_path, "p_data_{}.pt".format(i)))
 
             print(f"Agent {i} training complete")
@@ -157,14 +160,14 @@ class RLTask(BaseTask):
 
         pdata = []
         for file in glob.glob(os.path.join(tmp_path, "p_data_*.pt")):
-            buffers = torch.load(file)
-            for buffer in buffers:
-                param = []
-                for key in buffer.keys():
-                    if key in self.training_layers:
-                        param.append(buffer[key].data.reshape(-1))
-                param = torch.cat(param, 0)
-                pdata.append(param)
+            buffer = torch.load(file)
+            
+            param = []
+            for key in buffer.keys():
+                if key in self.actor_training_layers or key in self.critic_training_layers:
+                    param.append(buffer[key].data.reshape(-1))
+            param = torch.cat(param, 0)
+            pdata.append(param)
         batch = torch.stack(pdata)
         mean = torch.mean(batch, dim=0)
         std = torch.std(batch, dim=0)
@@ -177,7 +180,7 @@ class RLTask(BaseTask):
             'pdata': batch.cpu().detach(),
             'mean': mean.cpu(),
             'std': std.cpu(),
-            'model': torch.load(os.path.join(tmp_path, "whole_model.pth")),
+            #'model': torch.load(os.path.join(tmp_path, "whole_model.pth")),
             'train_layer': self.actor_training_layers + self.critic_training_layers,
             'performance': save_model_avg_score,
             'cfg': config_to_dict(self.cfg)

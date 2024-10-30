@@ -15,10 +15,10 @@ def state_part(train_list, net):
             part_param[name] = weights.detach().cpu()
     return part_param
 
-def extract_agent_params(training_layers, agent):
+def extract_agent_params(actor_training_layers, critic_training_layers, agent):
     params= {}
-    params.update(state_part(training_layers, agent.actor))
-    params.update(state_part(training_layers, agent.critic))
+    params.update(state_part(actor_training_layers, agent.actor))
+    params.update(state_part(critic_training_layers, agent.critic))
     return params
 
 
