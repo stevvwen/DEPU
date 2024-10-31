@@ -1,5 +1,6 @@
 #!/bin/bash
 
+
 # Directory for logs
 log_dir="log_experiments"
 

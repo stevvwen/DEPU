@@ -153,7 +153,7 @@ class RLTask(BaseTask):
             torch.save(extract_agent_params(self.actor_training_layers, self.critic_training_layers, self.trainer.agent),
                        os.path.join(tmp_path, "p_data_{}.pt".format(i)))
 
-            print(f"Agent {i} training complete")
+            print(f"Agent {i} training complete", flush=True)
 
         print("Training complete")
 

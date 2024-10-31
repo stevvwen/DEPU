@@ -46,7 +46,7 @@ class AgentTrainer:
 
     def rollout(self):
 
-        print(f"Agent training starts")
+        #print(f"Agent training starts")
         state = self.cur_state
 
         for step in range(self.max_steps):
