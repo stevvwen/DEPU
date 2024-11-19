@@ -10,7 +10,7 @@ class AgentTrainer:
         self.eval_interval= config.eval_interval
         self.eval_mode= config.eval_mode
 
-        self.device= "cuda:" + str(config.device.id)
+        self.device= "cuda:0" if torch.cuda.is_available() else "cpu"
 
         self.config= config
 

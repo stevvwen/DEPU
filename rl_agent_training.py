@@ -8,7 +8,8 @@ from core.utils.utils import make_env, make_agent
 
 @hydra.main(config_path="configs", config_name="base", version_base='1.2')
 def training_agent(config: DictConfig):
-
+    
+    config= config.task
     env, eval_env, env_dict = make_env(config.rl_env)
     agent= make_agent(env_dict, config.agent.agent)
     replay_buffer= hydra.utils.instantiate(config.replay_buffer)
@@ -41,7 +42,7 @@ def training_agent(config: DictConfig):
         wandb.define_metric("Epi Reward", step_metric="epi_count")
         wandb.define_metric("Eval Epi Reward", step_metric="eval_epi_count")
 
-    trainer= AgentTrainer(config, env= env, eval_env= eval_env, model= agent, replay_buffer= replay_buffer)
+    trainer= AgentTrainer(config)
     trainer.rollout()
 
     return
