@@ -77,7 +77,7 @@ class RLTask(BaseTask):
 
     def test_g_model(self, input):
         param= input
-        turns= 5
+        turns= 10
 
         test_agent, test_env = self.trainer.set_up_test(config= self.cfg)
 
@@ -95,11 +95,9 @@ class RLTask(BaseTask):
         params_num = torch.squeeze(param).shape[0]
         assert (actor_num+ critic_num == params_num)
 
-        param= torch.squeeze(param)
+        param= torch.squeeze(param).to(test_agent.device)
         
-        #TODO: Now we only replace the policy of the agent
-
-        test_agent= replace_agent_policy(param, test_agent, self.actor_training_layers, actor_num, critic_num).to(param.device)
+        test_agent= replace_agent(param, test_agent, self.actor_training_layers, self.critic_training_layers, actor_num, critic_num)
 
         total_score = 0
         test_epi_steps = 0

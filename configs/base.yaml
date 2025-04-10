@@ -16,7 +16,7 @@ device:
 #######################################
 mode: train
 
-process_title: p-diff
+process_title: Diffusion Upscale
 
 output_dir: outputs/rl
 

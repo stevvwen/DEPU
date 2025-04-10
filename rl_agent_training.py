@@ -2,18 +2,12 @@ import datetime
 import wandb
 from core.data.agent_trainer import AgentTrainer
 from core.runner.runner import *
-# tmp
-from core.utils.utils import make_env, make_agent
 
 
 @hydra.main(config_path="configs", config_name="base", version_base='1.2')
 def training_agent(config: DictConfig):
     
     config= config.task
-    env, eval_env, env_dict = make_env(config.rl_env)
-    agent= make_agent(env_dict, config.agent.agent)
-    replay_buffer= hydra.utils.instantiate(config.replay_buffer)
-    
     tmp_name= datetime.datetime.now().strftime('%y%m%d_%H%M%S')
 
     agent_cfg = config.agent.agent
@@ -25,8 +19,6 @@ def training_agent(config: DictConfig):
             project="DEPU",
             name= tmp_name,
             config={"learning rate": agent_cfg.lr,
-                    "observation size": agent_cfg.obs_shape,
-                    "action size": agent_cfg.act_shape,
                     "hidden size": agent_cfg.hidden_dim,
                     },
             allow_val_change=True

@@ -50,7 +50,6 @@ class AgentTrainer:
         state = self.cur_state
 
         for step in range(self.max_steps):
-
             action = self.agent.act(state, step, False)  # Select action
             next_state, reward, terminated, truncated, info = self.env.step(action)  # Step
 
