@@ -2,8 +2,8 @@ agent_name: td3
 
 agent:
   _target_: agents.td3.TD3Agent
-  obs_shape: ??? # to be specified later
-  act_shape: ??? # to be specified later
+  obs_shape: 3
+  act_shape: 1
   act_limit_low: ???
   act_limit_high: ???
   device: "cuda:0"

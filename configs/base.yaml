@@ -17,6 +17,7 @@ device:
 mode: train
 
 process_title: Diffusion Upscale
+load_system_checkpoint:
 
 output_dir: outputs/rl
 

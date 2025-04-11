@@ -2,7 +2,7 @@ name: ae_ddpm
 
 ae_model:
   _target_: core.module.modules.encoder.medium
-  in_dim: 2048
+  in_dim: 3715
   input_noise_factor: 0.001
   latent_noise_factor: 0.5
 

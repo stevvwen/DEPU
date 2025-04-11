@@ -3,7 +3,7 @@ name: vae
 model:
   arch:
     _target_: core.module.modules.odvae.medium
-    in_dim: 2048
+    in_dim: 3715
     latent_dim: 12
     kld_weight: 0.005
 
