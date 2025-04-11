@@ -10,14 +10,13 @@ import json
 import datetime
 import wandb
 from core.data.agent_trainer import AgentTrainer
+from core.data.rl_data import RLData
 from core.runner.runner import *
 
 import math
 
 # tmp
 from core.utils.utils import *
-
-
 
 
 class RLTask(BaseTask):
@@ -47,6 +46,14 @@ class RLTask(BaseTask):
         else:
             self.actor_training_layers= self.cfg.train_layer.actor
             self.critic_training_layers= self.cfg.train_layer.critic
+    
+
+    def set_param_data(self):
+
+        param_data= RLData(self.cfg.param)
+
+
+        return param_data
 
     # override the abstract method in base_task.py
     def plot(self, agent_cfg):
@@ -74,10 +81,12 @@ class RLTask(BaseTask):
             wandb.define_metric("Avg Reward", step_metric="custom_step")
             wandb.define_metric("Epi Reward", step_metric="epi_count")
             wandb.define_metric("Eval Epi Reward", step_metric="eval_epi_count")
+    
+    
 
     def test_g_model(self, input):
         param= input
-        turns= 10
+        turns= 20
 
         test_agent, test_env = self.trainer.set_up_test(config= self.cfg)
 
@@ -141,7 +150,7 @@ class RLTask(BaseTask):
 
 
         for i in range(0, self.num_agents):
-            self.plot(self.agent_config)
+            #self.plot(self.agent_config)
             self.trainer.reset_trainer()
             self.trainer.rollout()
             avg_score, eval_epi_steps= self.trainer.evaluate()

@@ -1,5 +1,5 @@
 from .classification import CFTask
-from .rl import RLTask
+from .rl_task import RLTask
 
 tasks = {
     'classification': CFTask,
