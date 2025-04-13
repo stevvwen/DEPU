@@ -25,6 +25,8 @@ def main(cfg: DictConfig):
     print(param_dict['train_layer'])
 
     param_data= param_dict['pdata']
+
+    print(param_data.shape)
     
     #for param in param_data:
     #    print(rl.test_g_model(param))

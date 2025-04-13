@@ -6,15 +6,15 @@ model:
     model:
       _target_: core.module.modules.unet.AE_CNN_bottleneck
       in_channel: 1
-      in_dim: 52
+      in_dim: 3715
 
 #     model:
 #       _target_: core.module.modules.od_unet.AE_CNN_bottleneck
 #       in_dim: 52
 
-data_transform:
-  system_cls: core.system.encoder.EncoderSystem
-  checkpoint_path: ${output_dir}/encoder/checkpoints/last.ckpt
+#data_transform:
+#  system_cls: core.system.encoder.EncoderSystem
+#  checkpoint_path: ${output_dir}/encoder/checkpoints/last.ckpt
 
 beta_schedule:
   start: 1e-4

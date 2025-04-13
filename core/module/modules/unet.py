@@ -497,19 +497,19 @@ class AE_CNN_bottleneck(nn.Module):
         # )
 
         self.enc1 = nn.Sequential(
-            nn.InstanceNorm1d(self.real_input_dim),
+            nn.InstanceNorm1d(),
             nn.Conv1d(in_channel, self.channel_list[0], self.kernal_size, stride=1, padding=1),
             nn.LeakyReLU(),
-            nn.InstanceNorm1d(self.real_input_dim),
+            nn.InstanceNorm1d(),
             nn.Conv1d(self.channel_list[0], self.channel_list[0], self.kernal_size, stride=self.fold_rate, padding=1),
             # nn.MaxPool1d(2),
         )
         self.enc2 = nn.Sequential(
             nn.LeakyReLU(),
-            nn.InstanceNorm1d(self.real_input_dim // self.fold_rate),
+            nn.InstanceNorm1d(),
             nn.Conv1d(self.channel_list[0], self.channel_list[1], self.kernal_size, stride=1, padding=1),
             nn.LeakyReLU(),
-            nn.InstanceNorm1d(self.real_input_dim // self.fold_rate),
+            nn.InstanceNorm1d(),
             nn.Conv1d(self.channel_list[1], self.channel_list[1], self.kernal_size, stride=self.fold_rate, padding=1),
             # nn.MaxPool1d(2),
         )

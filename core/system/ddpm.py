@@ -1,7 +1,3 @@
-import pdb
-
-import hydra.utils
-import pytorch_lightning as pl
 import torch
 from typing import Any
 import numpy as np
@@ -10,8 +6,7 @@ import torch.nn as nn
 from .base import BaseSystem
 from core.utils.ddpm import *
 from core.utils.utils import *
-from core.module.prelayer.latent_transformer import Param2Latent
-from .encoder import EncoderSystem
+
 
 class DDPM(BaseSystem):
     def __init__(self, config, **kwargs):
@@ -64,7 +59,6 @@ class DDPM(BaseSystem):
             model,
             shape,
             device='cuda',
-            # cond = cond_input_val,
             include_x0_pred_freq=50,
             history=history,
         )
