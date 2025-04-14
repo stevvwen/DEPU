@@ -14,7 +14,7 @@ eval_mode: False
 
 
 eval_interval: 1000
-num_agents: 200
+num_agents: 10000
 
 device:
   cuda_visible_devices:  "0,1,2,3,4,5,6"
@@ -46,8 +46,9 @@ data:
 
 param:
   data_root: param_data/Pendulum-v1/data.pt
-  k: 200
+  k: 10000
   num_workers: 4
+  batch_size: 64
 
 
 load_system_checkpoint:

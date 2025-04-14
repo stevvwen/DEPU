@@ -7,7 +7,6 @@ from .base import BaseSystem
 from core.utils.ddpm import *
 from core.utils.utils import *
 
-
 class DDPM(BaseSystem):
     def __init__(self, config, **kwargs):
         super(DDPM, self).__init__(config)
