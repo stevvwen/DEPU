@@ -1,22 +1,32 @@
-
 import shutil
 from .base_task import BaseTask
-from core.utils import *
 import glob
 import json
-
-
-
 import datetime
 import wandb
 from core.data.agent_trainer import AgentTrainer
 from core.data.rl_data import RLData
-from core.runner.runner import *
+from joblib import Parallel, delayed
+import os
+import torch
+from core.utils.utils import get_storage_usage, extract_agent_params, replace_agent
+from core.utils.format import config_to_dict
 
-import math
 
-# tmp
-from core.utils.utils import *
+def train_one_agent(agent_id, cfg, actor_layers, critic_layers, tmp_path):
+    print(f"Training agent {agent_id}...")
+    trainer = AgentTrainer(cfg)
+    trainer.reset_trainer()
+    trainer.rollout()
+    avg_score, _ = trainer.evaluate()
+
+    save_path = os.path.join(tmp_path, f"p_data_{agent_id}.pt")
+    torch.save(
+        extract_agent_params(actor_layers, critic_layers, trainer.agent),
+        save_path
+    )
+    print(f"Agent {agent_id} training finished, average score: {avg_score}")
+    return avg_score
 
 
 class RLTask(BaseTask):
@@ -49,10 +59,7 @@ class RLTask(BaseTask):
     
 
     def set_param_data(self):
-
         param_data= RLData(self.cfg.param)
-
-
         return param_data
 
     # override the abstract method in base_task.py
@@ -134,52 +141,39 @@ class RLTask(BaseTask):
         #TODO:
         pass
 
-    # override the abstract method in base_task.py, you obtain the model data for generation
     def train_for_data(self):
-
         data_path = getattr(self.cfg, 'save_root', 'param_data')
-
         tmp_path = os.path.join(data_path, 'tmp_{}'.format(self.tmp_time))
         final_path = os.path.join(data_path, self.cfg.data.dataset)
 
         os.makedirs(tmp_path, exist_ok=True)
         os.makedirs(final_path, exist_ok=True)
 
-        save_model_avg_score = []
-        highest_avg_score= -math.inf
+        # Parallelize agent training
+        save_model_avg_score = Parallel(n_jobs=16)(
+            delayed(train_one_agent)(
+                i, self.cfg, self.actor_training_layers, self.critic_training_layers, tmp_path
+            ) for i in range(self.num_agents)
+        )
+        #save_model_avg_score = []
+        #for i in range(self.num_agents):
+        #    save_model_avg_score.append(train_one_agent(i, self.cfg, self.actor_training_layers, self.critic_training_layers, tmp_path))
 
 
-        for i in range(0, self.num_agents):
-            #self.plot(self.agent_config)
-            self.trainer.reset_trainer()
-            self.trainer.rollout()
-            avg_score, eval_epi_steps= self.trainer.evaluate()
-            highest_avg_score = max(avg_score, highest_avg_score)
-
-            save_model_avg_score.append(avg_score)
-            torch.save(extract_agent_params(self.actor_training_layers, self.critic_training_layers, self.trainer.agent),
-                       os.path.join(tmp_path, "p_data_{}.pt".format(i)))
-
-            print(f"Agent {i} training complete", flush=True)
-
-        print("Training complete")
-
-
+        # Aggregate parameters
         pdata = []
         for file in glob.glob(os.path.join(tmp_path, "p_data_*.pt")):
             buffer = torch.load(file)
-            
             param = []
             for key in buffer.keys():
                 if key in self.actor_training_layers or key in self.critic_training_layers:
                     param.append(buffer[key].data.reshape(-1))
-            param = torch.cat(param, 0)
-            pdata.append(param)
+            pdata.append(torch.cat(param, 0))
+
         batch = torch.stack(pdata)
         mean = torch.mean(batch, dim=0)
         std = torch.std(batch, dim=0)
 
-        # check the memory of p_data
         useage_gb = get_storage_usage(tmp_path)
         print(f"path {tmp_path} storage usage: {useage_gb:.2f} GB")
 
@@ -187,24 +181,19 @@ class RLTask(BaseTask):
             'pdata': batch.cpu().detach(),
             'mean': mean.cpu(),
             'std': std.cpu(),
-            #'model': torch.load(os.path.join(tmp_path, "whole_model.pth")),
             'train_layer': self.actor_training_layers + self.critic_training_layers,
             'performance': save_model_avg_score,
             'cfg': config_to_dict(self.cfg)
         }
-
         torch.save(state_dic, os.path.join(final_path, "data.pt"))
+
         json_state = {
             'cfg': config_to_dict(self.cfg),
             'performance': save_model_avg_score
         }
-
         json.dump(json_state, open(os.path.join(final_path, "config.json"), 'w'))
 
-        # copy the code file(the file) in state_save_dir
-        #shutil.copy(os.path.abspath(__file__), os.path.join(final_path, os.path.basename(__file__)))
-
-        # delete the tmp_path
         shutil.rmtree(tmp_path)
         print("data process over")
         return {'save_path': final_path}
+

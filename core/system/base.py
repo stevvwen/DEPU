@@ -3,13 +3,8 @@ import pdb
 import pytorch_lightning as pl
 import abc
 import hydra
-import torch.optim.lr_scheduler
 import warnings
-from typing import Optional, Union, List, Dict, Any, Sequence
-from omegaconf import DictConfig, OmegaConf
-from pytorch_lightning.callbacks import ModelCheckpoint
-import types
-from core.tasks import tasks
+
 
 class BaseSystem(pl.LightningModule, abc.ABC):
     def __init__(self, cfg):
@@ -27,6 +22,7 @@ class BaseSystem(pl.LightningModule, abc.ABC):
         self.build_task(task_cfg)
 
     def build_task(self, task_cfg, **kwargs):
+        from core.tasks import tasks
         self.task = tasks[task_cfg.name](task_cfg)
 
     def get_task(self):
