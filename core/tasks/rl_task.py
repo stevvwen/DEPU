@@ -150,7 +150,7 @@ class RLTask(BaseTask):
         os.makedirs(final_path, exist_ok=True)
 
         # Parallelize agent training
-        save_model_avg_score = Parallel(n_jobs=16)(
+        save_model_avg_score = Parallel(n_jobs=32)(
             delayed(train_one_agent)(
                 i, self.cfg, self.actor_training_layers, self.critic_training_layers, tmp_path
             ) for i in range(self.num_agents)
