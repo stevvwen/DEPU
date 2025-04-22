@@ -17,7 +17,7 @@ def set_device(device_config):
     torch.backends.cudnn.enabled = True
     os.environ["CUDA_VISIBLE_DEVICES"] = str(device_config.cuda_visible_devices)
     torch.cuda.set_device(device_config.cuda)
-    torch.set_float32_matmul_precision('medium')
+    torch.set_float32_matmul_precision('high')
     # warnings.filterwarnings("always")
 
 
@@ -27,9 +27,8 @@ def set_processtitle(cfg):
     setproctitle.setproctitle(cfg.process_title)
 
 def init_experiment(cfg, **kwargs):
-    cfg = cfg
 
-    print("config:")
+    """print("config:")
     for k, v in cfg.items():
         print(k, v)
     print("=" * 20)
@@ -37,12 +36,10 @@ def init_experiment(cfg, **kwargs):
     print("kwargs:")
     for k, v in kwargs.items():
         print(k, v)
-    print("=" * 20)
+    print("=" * 20)"""
 
     # set seed
     set_seed(cfg.seed)
-    # set device
-    #set_device(cfg.device)
 
     # set process title
     set_processtitle(cfg)

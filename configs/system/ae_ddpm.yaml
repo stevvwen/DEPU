@@ -3,8 +3,8 @@ name: ae_ddpm
 ae_model:
   _target_: core.module.modules.encoder.medium
   in_dim: 3715
-  input_noise_factor: 0.001
-  latent_noise_factor: 0.5
+  input_noise_factor: 0.1
+  latent_noise_factor: 0.2
 
 #     _target_: core.module.modules.autoencoder.Latent_AE_cnn_small
 #     in_dim: 2048
@@ -15,11 +15,7 @@ model:
     model:
       _target_: core.module.modules.unet.AE_CNN_bottleneck
       in_channel: 1
-      in_dim: 12
-
-#     model:
-#       _target_: core.module.modules.od_unet.AE_CNN_bottleneck
-#       in_dim: 52
+      in_dim: 20
 
 
 beta_schedule:
@@ -33,7 +29,7 @@ model_var_type: fixedlarge
 loss_type: mse
 
 train:
-  split_epoch: 50000
+  split_epoch: 500
 #   split_epoch: 0
   optimizer:
     _target_: torch.optim.AdamW
@@ -50,8 +46,8 @@ train:
   trainer:
     _target_: pytorch_lightning.Trainer
     _convert_: all
-    max_epochs: 200000
-    check_val_every_n_epoch: 5000
+    max_epochs: 2000
+    check_val_every_n_epoch: 200
     val_check_interval : null
     log_every_n_steps: 10
     limit_val_batches: 1

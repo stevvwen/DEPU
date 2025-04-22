@@ -17,7 +17,7 @@ class ODEncoder(nn.Module):
         self.kernel_size = kernel_size
 
         # insert the first layer
-        channel_list = [channel_list[0]] + channel_list
+        channel_list = [1] + channel_list
         self.channel_list = channel_list
         encoder = nn.ModuleList()
         layer_num = len(channel_list) - 1
@@ -37,10 +37,10 @@ class ODEncoder(nn.Module):
         # first: if is the first layer of encoder
         layer = nn.Sequential(
             nn.LeakyReLU() if not if_start else nn.Identity(),
-            nn.InstanceNorm1d(in_dim),
+            nn.InstanceNorm1d(input_channel if not if_start else 1),
             nn.Conv1d(input_channel if not if_start else 1, input_channel, kernel_size, stride=1, padding=1),
             nn.LeakyReLU(),
-            nn.InstanceNorm1d(in_dim),
+            nn.InstanceNorm1d(input_channel),
             nn.Conv1d(input_channel, output_channel, kernel_size, stride=fold_rate, padding=0),
             nn.Tanh() if last else nn.Identity(),
         )
@@ -79,12 +79,13 @@ class ODDecoder(nn.Module):
     def build_layer(self, in_dim, kernel_size, fold_rate, input_channel, output_channel, last):
         layer = nn.Sequential(
             nn.LeakyReLU(),
-            nn.InstanceNorm1d(in_dim),
+            nn.InstanceNorm1d(input_channel),
             nn.ConvTranspose1d(input_channel, input_channel, kernel_size, stride=fold_rate, padding=0),
             nn.LeakyReLU(),
-            nn.InstanceNorm1d(in_dim),
+            nn.InstanceNorm1d(input_channel),
             nn.Conv1d(input_channel, output_channel, kernel_size, stride=1, padding=fold_rate if last else fold_rate - 1)
         )
+
         return layer
 
     def forward(self, x, **kwargs):
@@ -123,6 +124,7 @@ class ODEncoder2Decoder(nn.Module):
             dec_dim_list.append(dim)
 
         self.real_input_dim = real_input_dim
+        #print(f"real_input_dim: {real_input_dim} ############################# ######################### ######################### ###################")
         self.encoder = ODEncoder(enc_dim_list, fold_rate, kernel_size, enc_channel_list)
         self.decoder = ODDecoder(dec_dim_list, fold_rate, kernel_size, dec_channel_list)
 
@@ -164,7 +166,7 @@ class ODEncoder2Decoder(nn.Module):
         x = self.add_noise(x, self.input_noise_factor)
         x = self.encode(x)
         x = self.add_noise(x, self.latent_noise_factor)
-        x = torch.clamp(x, -1, 1)
+        #x = torch.clamp(x, -1, 1)
         x = self.decode(x)
         return x
 
@@ -177,14 +179,141 @@ class small(ODEncoder2Decoder):
         dec_channel_list = [2, 64, 64, 8]
         super(small, self).__init__(in_dim, kernel_size, fold_rate, input_noise_factor, latent_noise_factor, enc_channel_list, dec_channel_list)
 
-class medium(ODEncoder2Decoder):
+class medium1(ODEncoder2Decoder):
     def __init__(self, in_dim, input_noise_factor, latent_noise_factor):
         fold_rate = 5
         kernel_size = 5
-        enc_channel_list = [4, 4, 4, 4]
-        dec_channel_list = [4, 256, 256, 8]
-        super(medium, self).__init__(in_dim, kernel_size, fold_rate, input_noise_factor, latent_noise_factor, enc_channel_list, dec_channel_list)
+        enc_channel_list = [4, 4, 4]
+        dec_channel_list = [4, 256, 8]
+        super(medium1, self).__init__(in_dim, kernel_size, fold_rate, input_noise_factor, latent_noise_factor, enc_channel_list, dec_channel_list)
+
+"""class medium(nn.Module):
+
+    def __init__(self, in_dim, input_noise_factor, latent_noise_factor):
+
+        super(medium, self).__init__()
+        
+
+        self.encoder= nn.Sequential(
+                    nn. Linear(in_dim, 512),
+                    nn. LeakyReLU(),
+                    nn. Linear(512, 256),
+                    nn. LeakyReLU(),
+                    nn. Linear(256, 256),
+                    nn. LeakyReLU(),
+                    nn. Linear(256, 128)
+                )
+        self.decoder= nn.Sequential(
+                    nn. Linear(128, 256),
+                    nn. LeakyReLU(),
+                    nn. Linear(256, 256),
+                    nn. LeakyReLU(),
+                    nn. Linear(256, 512),
+                    nn. LeakyReLU(),
+                    nn. Linear(512, in_dim)
+                )
+        self.input_noise_factor = input_noise_factor
+        self.latent_noise_factor = latent_noise_factor
+
+    def encode(self, x):
+        x= self.encoder(x)
+        return x
+    
+    def decode(self, x):
+        decoded = self.decoder(x)
+        return decoded
+    
+
+    def add_noise(self, x, noise_factor):
+        if not isinstance(noise_factor, float):
+            assert len(noise_factor) == 2
+            noise_factor = random.uniform(noise_factor[0], noise_factor[1])
+
+        return torch.randn_like(x) * noise_factor + x * (1 - noise_factor)
+    
+
+    def forward(self, x):
+        x = self.add_noise(x, self.input_noise_factor)
+        x = self.encoder(x)
+        x = self.add_noise(x, self.latent_noise_factor)
+        x = self.decoder(x)
+        return x"""
+
+
+class medium(nn.Module):
+    def __init__(self, in_dim, input_noise_factor=0.05, latent_noise_factor=0.1):
+        super(medium, self).__init__()
+        self.input_dim = in_dim
+        self.input_noise_factor = input_noise_factor
+        self.latent_noise_factor = latent_noise_factor
+
+        # Assuming input shape is [batch_size, 1, input_dim]
+        self.encoder = nn.Sequential(
+            nn.Conv1d(1, 16, kernel_size=5, stride=3, padding=2),  # [B, 16, input_dim/2]
+            nn.BatchNorm1d(16),
+            nn.LeakyReLU(),
+
+            nn.Conv1d(16, 32, kernel_size=5, stride=3, padding=2),  # [B, 32, input_dim/4]
+            nn.BatchNorm1d(32),
+            nn.LeakyReLU(),
+
+            nn.Conv1d(32, 64, kernel_size=5, stride=3, padding=2),  # [B, 64, input_dim/8]
+            nn.BatchNorm1d(64),
+            nn.LeakyReLU(),
+
+            nn.Conv1d(64, 64, kernel_size=4, stride=2, padding=2),  # [B, 64, input_dim/16]
+            nn.BatchNorm1d(64),
+            nn.LeakyReLU(),
+        )
+
+
+        self.decoder = nn.Sequential(
+
+            nn.ConvTranspose1d(64, 64, kernel_size=4, stride=2, padding=1),  # [B, 64, D/8]
+            nn.BatchNorm1d(64),
+            nn.LeakyReLU(),
+
+
+            nn.ConvTranspose1d(64, 32, kernel_size=4, stride=3, padding=1),  # [B, 32, input_dim/4]
+            nn.BatchNorm1d(32),
+            nn.LeakyReLU(),
+
+            nn.ConvTranspose1d(32, 16, kernel_size=4, stride=3, padding=1),  # [B, 16, input_dim/2]
+            nn.BatchNorm1d(16),
+            nn.LeakyReLU(),
+
+            nn.ConvTranspose1d(16, 1, kernel_size=4, stride=3, padding=1),  # [B, 1, input_dim]
+            nn.LeakyReLU(),
+        )
+
+    def add_noise(self, x, factor):
+        return x + torch.randn_like(x) * factor
+
+    def forward(self, x):
+        if len(x.shape) == 2:
+            x = x.unsqueeze(1)  # [B, 1, D]
+        elif len(x.shape) == 3 and x.shape[1] != 1:
+            raise ValueError("Input must be [B, D] or [B, 1, D]")
+
+        x = self.add_noise(x, self.input_noise_factor)
+        x = self.encoder(x)
+        #print(f"Encoder output shape: {x.shape}")
+        x = self.add_noise(x, self.latent_noise_factor)
+        x = self.decoder(x)
+        x = x[:, :, :self.input_dim]  # Ensure output length matches input
+        return x.squeeze(1)
+
+    def encode(self, x):
+        if len(x.shape) == 2:
+            x = x.unsqueeze(1)
+        return self.encoder(x)
+    
+    def decode(self, x):
+        if len(x.shape) == 2:
+            x = x.unsqueeze(0)
+        return self.decoder(x)[:, :, :self.input_dim]
+
 
 
 if __name__ == '__main__':
-    model = small(2048, 0.1, 0.1)
+    model = medium(2048, 0.1, 0.1)

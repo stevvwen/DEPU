@@ -2,26 +2,17 @@ name: encoder
 
 model:
   arch:
-#     _target_: core.module.modules.encoder.small
-#     in_dim: 2048
-#     input_noise_factor: 0.001
-#     latent_noise_factor: [0, 0.5]
-
-
     _target_: core.module.modules.encoder.medium
     in_dim: 3715
-    input_noise_factor: 0.001
-    latent_noise_factor: 0.1
-
-#     _target_: core.module.modules.autoencoder.Latent_AE_cnn_small
-#     in_dim: 2048
+    input_noise_factor: 0.01
+    latent_noise_factor: 0.01
 
   data_transform:
 
 train:
   optimizer:
     _target_: torch.optim.AdamW
-    lr: 1e-3
+    lr: 3e-4
     weight_decay: 2e-6
 
   lr_scheduler:
@@ -33,9 +24,9 @@ train:
   trainer:
     _target_:  pytorch_lightning.trainer.Trainer
     strategy: 'auto'
-    max_epochs: 30000
-    check_val_every_n_epoch:
-    val_check_interval : 3000
+    max_epochs: 20000
+    check_val_every_n_epoch: 1000
+    val_check_interval : null
     log_every_n_steps: 1
     limit_val_batches: 1
     devices:
