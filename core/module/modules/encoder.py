@@ -251,39 +251,45 @@ class medium(nn.Module):
         self.encoder = nn.Sequential(
             nn.Conv1d(1, 16, kernel_size=5, stride=3, padding=2),  # [B, 16, input_dim/2]
             nn.BatchNorm1d(16),
+            #nn.InstanceNorm1d(16),
             nn.LeakyReLU(),
 
             nn.Conv1d(16, 32, kernel_size=5, stride=3, padding=2),  # [B, 32, input_dim/4]
             nn.BatchNorm1d(32),
+            #nn.InstanceNorm1d(32),
             nn.LeakyReLU(),
 
             nn.Conv1d(32, 64, kernel_size=5, stride=3, padding=2),  # [B, 64, input_dim/8]
             nn.BatchNorm1d(64),
+            #nn.InstanceNorm1d(64),
             nn.LeakyReLU(),
 
             nn.Conv1d(64, 64, kernel_size=4, stride=2, padding=2),  # [B, 64, input_dim/16]
             nn.BatchNorm1d(64),
+            #nn.InstanceNorm1d(64),
             nn.LeakyReLU(),
         )
 
 
         self.decoder = nn.Sequential(
 
-            nn.ConvTranspose1d(64, 64, kernel_size=4, stride=2, padding=1),  # [B, 64, D/8]
+            nn.ConvTranspose1d(64, 64, kernel_size=5, stride=2, padding=1),  # [B, 64, D/8]
             nn.BatchNorm1d(64),
+            #nn.InstanceNorm1d(64),
             nn.LeakyReLU(),
 
 
-            nn.ConvTranspose1d(64, 32, kernel_size=4, stride=3, padding=1),  # [B, 32, input_dim/4]
+            nn.ConvTranspose1d(64, 32, kernel_size=5, stride=3, padding=1),  # [B, 32, input_dim/4]
             nn.BatchNorm1d(32),
+            #nn.InstanceNorm1d(32),
             nn.LeakyReLU(),
 
-            nn.ConvTranspose1d(32, 16, kernel_size=4, stride=3, padding=1),  # [B, 16, input_dim/2]
+            nn.ConvTranspose1d(32, 16, kernel_size=5, stride=3, padding=1),  # [B, 16, input_dim/2]
             nn.BatchNorm1d(16),
+            #nn.InstanceNorm1d(16),
             nn.LeakyReLU(),
 
-            nn.ConvTranspose1d(16, 1, kernel_size=4, stride=3, padding=1),  # [B, 1, input_dim]
-            nn.LeakyReLU(),
+            nn.ConvTranspose1d(16, 1, kernel_size=5, stride=3, padding=1),  # [B, 1, input_dim]
         )
 
     def add_noise(self, x, factor):
@@ -300,6 +306,7 @@ class medium(nn.Module):
         #print(f"Encoder output shape: {x.shape}")
         x = self.add_noise(x, self.latent_noise_factor)
         x = self.decoder(x)
+        #print(f"Decoder output shape: {x.shape}")
         x = x[:, :, :self.input_dim]  # Ensure output length matches input
         return x.squeeze(1)
 

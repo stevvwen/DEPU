@@ -84,7 +84,7 @@ class AgentTrainer:
 
             self.cur_state = state
 
-            if len(self.buffer) < self.batch_size and step< self.agent.num_expl_steps:
+            if len(self.buffer) < self.batch_size or step< self.agent.num_expl_steps:
                 continue
             else:
                 batch = self.buffer.sample(

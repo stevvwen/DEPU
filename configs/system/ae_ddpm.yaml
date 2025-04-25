@@ -29,7 +29,7 @@ model_var_type: fixedlarge
 loss_type: mse
 
 train:
-  split_epoch: 500
+  split_epoch: 400
 #   split_epoch: 0
   optimizer:
     _target_: torch.optim.AdamW
@@ -46,8 +46,8 @@ train:
   trainer:
     _target_: pytorch_lightning.Trainer
     _convert_: all
-    max_epochs: 2000
-    check_val_every_n_epoch: 200
+    max_epochs: 1000
+    check_val_every_n_epoch: 50
     val_check_interval : null
     log_every_n_steps: 10
     limit_val_batches: 1

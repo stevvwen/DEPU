@@ -68,11 +68,11 @@ class EncoderSystem(BaseSystem):
             acc, test_loss, output_list = self.task_func(param)
             ae_rec_accs.append(acc)
 
-        best_ae = max(ae_rec_accs)
+        best_ae = np.mean(np.array(ae_rec_accs))
         print(f'AE reconstruction models accuracy:{ae_rec_accs}')
-        print(f'AE reconstruction models best accuracy:{best_ae}')
+        print(f'AE reconstruction model mean accuracy:{best_ae}')
         print('---------------------------------')
-        self.log('ae_acc', best_ae)
+        self.log('ae_acc', best_ae.item())
 
     def encode(self, x, **kwargs):
         return self.model.encode(x)

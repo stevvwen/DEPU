@@ -90,9 +90,44 @@ class DDPM(BaseSystem):
             outputs = self.data_transform.post_process(outputs)
         return outputs
 
+
+    def process(self, batch):
+
+        time = (torch.rand(batch.shape[0]) * self.n_timestep).type(torch.int64).to(batch.device)
+        model = self.model
+
+        noise = None
+        lab = None
+        if noise is None:
+            noise = torch.randn_like(batch)
+        x_t = self.q_sample(batch, time, noise=noise)
+
+        # todo: loss using criterion, so we can change it
+        if self.loss_type == 'kl':
+            # the variational bound
+            losses = self._vb_terms_bpd(model=model, x_0=batch, x_t=x_t, t=time, clip_denoised=False, return_pred_x0=False)
+
+        elif self.loss_type == 'mse':
+            # unweighted MSE
+            assert self.model_var_type != 'learned'
+            target = {
+                'xprev': self.q_posterior_mean_variance(x_0=batch, x_t=x_t, t=time)[0],
+                'xstart': batch,
+                'eps': noise
+            }[self.model_mean_type]
+
+            model_output = model(x_t, time, cond=lab)
+            losses       = torch.mean((target - model_output).view(batch.shape[0], -1)**2, dim=1)
+
+        else:
+            raise NotImplementedError(self.loss_type)
+
+        return model_output
+
     def validation_step(self, batch, batch_idx, **kwargs: Any):
         batch = self.pre_process(batch)
-        outputs = self.generate(batch, 10)
+        #outputs = self.generate(batch, 10)
+        outputs= self.process(batch)
 
         params = self.post_process(outputs)
         params = params.cpu()

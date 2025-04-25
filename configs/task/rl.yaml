@@ -14,7 +14,7 @@ eval_mode: False
 
 
 eval_interval: 1000
-num_agents: 10000
+num_agents: 100
 
 device:
   cuda_visible_devices:  "0,1,2,3,4,5,6"
@@ -28,7 +28,7 @@ replay_buffer:
   capacity: 100000
   seed: ${seed}
 
-batch_size: 256
+batch_size: 32
 
 
 save_root: "param_data"
@@ -45,10 +45,11 @@ data:
 
 
 param:
-  data_root: param_data/Pendulum-v1/data.pt
+  data_root: param_data/Pendulum-v1_current/data.pt
+  val_data_root: param_data/Pendulum-v1_current/val_data.pt
   k: 10000
   num_workers: 4
-  batch_size: 64
+  batch_size: 128
 
 
 load_system_checkpoint:

@@ -22,7 +22,8 @@ class AE_DDPM(DDPM):
         output = self.ae_model(batch)
         loss = self.loss_func(batch, output, **kwargs)
         # self.log('epoch', self.current_epoch)
-        self.log('ae_loss', loss.cpu().detach().mean().item(), on_epoch=True, prog_bar=True, logger=True)
+        if  self.current_epoch < self.split_epoch:
+            self.log('ae_loss', loss.cpu().detach().mean().item(), on_epoch=True, prog_bar=True, logger=True)
         return loss
 
     def training_step(self, batch, batch_idx, **kwargs):
@@ -37,6 +38,7 @@ class AE_DDPM(DDPM):
             ddpm_optimizer.zero_grad()
             self.manual_backward(loss)
             ddpm_optimizer.step()
+            self.log('ddpm_loss', loss.cpu().detach().mean().item(), on_epoch=True, prog_bar=True, logger=True)
 
         if hasattr(self, 'lr_scheduler'):
             self.lr_scheduler.step()
@@ -53,8 +55,8 @@ class AE_DDPM(DDPM):
         return self.ae_model.decode(outputs)
 
     def validation_step(self, batch, batch_idx, **kwargs: Any):
-        if self.current_epoch < self.split_epoch:
-            # todo
+        if self.current_epoch < self.split_epoch- 5:
+            """# todo
             good_param = batch[:10]
             input_accs = []
             for i, param in enumerate(good_param):
@@ -62,9 +64,8 @@ class AE_DDPM(DDPM):
                 input_accs.append(acc)
             print("input model accuracy:{}".format(input_accs))
 
-            """
+        
             AE reconstruction parameters
-            """
             print('---------------------------------')
             print('Test the AE model')
             ae_rec_accs = []
@@ -78,12 +79,16 @@ class AE_DDPM(DDPM):
                 acc, test_loss, output_list = self.task_func(param)
                 ae_rec_accs.append(acc)
 
-            best_ae = max(ae_rec_accs)
+            best_ae = np.mean(ae_rec_accs)
             print(f'AE reconstruction models accuracy:{ae_rec_accs}')
             print(f'AE reconstruction models best accuracy:{best_ae}')
             print('---------------------------------')
             self.log('ae_acc', best_ae)
+            self.log('best_g_acc', 0)"""
+
+            self.log('ae_acc', 0)
             self.log('best_g_acc', 0)
+            
         else:
             dict = super(AE_DDPM, self).validation_step(batch, batch_idx, **kwargs)
             self.log('ae_acc', 94.3)

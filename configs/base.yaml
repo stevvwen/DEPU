@@ -5,7 +5,7 @@ defaults:
 
 
 
-seed: 30
+seed: 3407
 
 device:
   cuda_visible_devices:  "0,1,2,3,4,5,6"

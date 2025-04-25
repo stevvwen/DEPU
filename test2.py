@@ -1,6 +1,6 @@
 import glob, os
 import torch
-tmp_path= "./param_data/tmp_241028_112725"
+tmp_path= "param_data/tmp_250414_180816"
 
 
 

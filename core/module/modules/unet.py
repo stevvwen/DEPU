@@ -470,11 +470,110 @@ class AE_CNN(nn.Module):
         emb_dec4 = self.dec4(emb_dec3 + time_info)
 
         return emb_dec4.reshape(input_shape)
+    
+class AE_CNN_bottleneck(nn.Module):
+    def __init__(
+            self,
+            in_dim,
+            in_channel,
+            time_step=1000,
+            dec=None
+    ):
+        super().__init__()
+
+        self.channel_list = [64, 128, 256, 512]  # todo: self.channel_list*2
+
+        # self.enc1 = nn.Sequential(nn.Conv1d(1, 10, 3, stride=1),nn.LeakyReLU(),nn.Conv1d(1, 10, 3, stride=1),)
+        self.in_dim = in_dim
+        self.fold_rate = 1
+        self.kernal_size = 3
+        self.dec = dec
+        self.real_input_dim = in_dim
+
+        self.enc1 = nn.Sequential(
+            
+            nn.Conv1d(in_channel, self.channel_list[0], self.kernal_size, stride=1, padding=1),
+            nn.BatchNorm1d(self.channel_list[0]),
+            nn.ELU(),
+        )
+
+        self.enc2 = nn.Sequential(
+            
+            nn.Conv1d(self.channel_list[0], self.channel_list[1], self.kernal_size, stride=1, padding=1),
+            nn.BatchNorm1d(self.channel_list[1]),
+            nn.ELU(),
+        )
+
+        self.enc3 = nn.Sequential(
+            
+            nn.Conv1d(self.channel_list[1], self.channel_list[2], self.kernal_size, stride=1, padding=1),
+            nn.BatchNorm1d(self.channel_list[2]),
+            nn.ELU(),
+        )
+
+
+        self.dec2 = nn.Sequential(
+            
+            nn.ConvTranspose1d(
+                self.channel_list[2], self.channel_list[1], self.kernal_size, stride=self.fold_rate, padding=1
+            ),
+            nn.BatchNorm1d(self.channel_list[1]),
+            nn.ELU(),
+        )
+
+        self.dec3 = nn.Sequential(
+            
+            nn.ConvTranspose1d(
+                self.channel_list[1], self.channel_list[0], self.kernal_size, stride=self.fold_rate, padding=1
+            ),
+            nn.BatchNorm1d(self.channel_list[0]),
+            nn.ELU(),
+        )
+
+        self.dec4 = nn.Sequential(
+            
+            nn.Conv1d(self.channel_list[0], in_channel, self.kernal_size, stride=1, padding=1),
+        )
+
+        self.time_encode = nn.Embedding(time_step, self.real_input_dim)
+
+    def forward(self, input, time, cond=None):
+        assert input.shape[1] * input.shape[2] == self.in_dim
+
+        input_shape = input.shape
+        input = input.reshape(input.shape[0], 1, -1)
+        # import pdb;pdb.set_trace()
+
+        time_info = self.time_encode(time)[0, None, None]
+        time_info = time_info.repeat((input.shape[0], 1, 1))
+
+
+        if len(input.size()) == 2:
+            input = input.view(input.size(0), 1, -1)
+
+
+        emb_enc1 = self.enc1(input + time_info)
+        emb_enc2 = self.enc2(emb_enc1 + time_info)
+        emb_enc3 = self.enc3(emb_enc2 + time_info)
+        #emb_enc4 = self.enc4(emb_enc3 + time_info)
+        # import pdb; pdb.set_trace()
+
+        #emb_dec1 = self.dec1(emb_enc4 + time_info) + emb_enc3
+        emb_dec2 = self.dec2(emb_enc3 + time_info) + emb_enc2
+        emb_dec3 = self.dec3(emb_dec2 + time_info) + emb_enc1
+        emb_dec4 = self.dec4(emb_dec3 + time_info)
+        # import pdb; pdb.set_trace()
+
+        emb_dec4 = emb_dec4.reshape(input_shape)
+        # if self.dec is not None:
+        #     emb_dec4 = self.dec.Dec(emb_dec4)
+
+        return emb_dec4
 
 
 ##
 ## LDM的backbone(同时也是convAE work for 30k量级size模型 但是有些输入特征维度不同 所以下面还有一个AE_CNN_bottleneck_ori,是convAE的backbone)
-class AE_CNN_bottleneck(nn.Module):
+class AE_CNN_bottleneck1(nn.Module):
     def __init__(
             self,
             in_dim,
@@ -591,19 +690,6 @@ class AE_CNN_bottleneck(nn.Module):
         if len(input.size()) == 2:
             input = input.view(input.size(0), 1, -1)
 
-        input = input
-        # input = torch.cat(
-        #     [
-        #         input,
-        #         # time_info.repeat((1,input.shape[1],1)),
-        #         torch.zeros(input.shape[0], input.shape[1], (self.real_input_dim - self.in_dim)).to(
-        #             input.device
-        #         ),
-        #     ],
-        #     dim=2,
-        # )
-        # import pdb; pdb.set_trace()
-        # time_info = torch.cat([time_info, torch.zeros(time_info.shape[0],1,6).to(time_info.device) ], dim=2)
         emb_enc1 = self.enc1(input + time_info)
         emb_enc2 = self.enc2(emb_enc1 + time_info)
         emb_enc3 = self.enc3(emb_enc2 + time_info)
@@ -984,154 +1070,7 @@ class AE_CNN_bottleneck_deep(nn.Module):
         return emb_dec4.reshape(input_shape)
 
 
-class AE_CNN_bottleneck_ori(nn.Module):
-    def __init__(
-            self,
-            in_dim,
-            in_channel,
-            time_step=1000,
-            dec=None
-    ):
-        super().__init__()
 
-        self.channel_list = [64, 128, 256, 512]
-
-        # self.enc1 = nn.Sequential(nn.Conv1d(1, 10, 3, stride=1),nn.LeakyReLU(),nn.Conv1d(1, 10, 3, stride=1),)
-        self.in_dim = in_dim
-        self.fold_rate = 1
-        self.kernal_size = 3
-        self.dec = dec
-        self.real_input_dim = in_dim
-        # (
-        #     int((in_dim+1000) / self.fold_rate**4 + 1) * self.fold_rate**4
-        # )
-
-        self.enc1 = nn.Sequential(
-            nn.InstanceNorm1d(self.real_input_dim),
-            nn.Conv1d(in_channel, self.channel_list[0], self.kernal_size, stride=1, padding=1),
-            nn.LeakyReLU(),
-            nn.InstanceNorm1d(self.real_input_dim),
-            nn.Conv1d(self.channel_list[0], self.channel_list[0], self.kernal_size, stride=self.fold_rate, padding=1),
-            # nn.MaxPool1d(2),
-        )
-        self.enc2 = nn.Sequential(
-            nn.LeakyReLU(),
-            nn.InstanceNorm1d(self.real_input_dim // self.fold_rate),
-            nn.Conv1d(self.channel_list[0], self.channel_list[1], self.kernal_size, stride=1, padding=1),
-            nn.LeakyReLU(),
-            nn.InstanceNorm1d(self.real_input_dim // self.fold_rate),
-            nn.Conv1d(self.channel_list[1], self.channel_list[1], self.kernal_size, stride=self.fold_rate, padding=1),
-            # nn.MaxPool1d(2),
-        )
-        self.enc3 = nn.Sequential(
-            nn.LeakyReLU(),
-            nn.InstanceNorm1d(self.real_input_dim // self.fold_rate ** 2),
-            nn.Conv1d(self.channel_list[1], self.channel_list[2], self.kernal_size, stride=1, padding=1),
-            nn.LeakyReLU(),
-            nn.InstanceNorm1d(self.real_input_dim // self.fold_rate ** 2),
-            nn.Conv1d(self.channel_list[2], self.channel_list[2], self.kernal_size, stride=self.fold_rate, padding=1),
-            # nn.MaxPool1d(2),
-        )
-        self.enc4 = nn.Sequential(
-            nn.LeakyReLU(),
-            nn.InstanceNorm1d(self.real_input_dim // self.fold_rate ** 3),
-            nn.Conv1d(self.channel_list[2], self.channel_list[3], self.kernal_size, stride=1, padding=1),
-            nn.LeakyReLU(),
-            nn.InstanceNorm1d(self.real_input_dim // self.fold_rate ** 3),
-            nn.Conv1d(self.channel_list[3], self.channel_list[3], self.kernal_size, stride=self.fold_rate, padding=1),
-            # nn.MaxPool1d(2),
-        )
-
-        self.dec1 = nn.Sequential(
-            nn.LeakyReLU(),
-            nn.InstanceNorm1d(self.real_input_dim // self.fold_rate ** 4),
-            # nn.ConvTranspose1d(
-            nn.Conv1d(
-                self.channel_list[3], self.channel_list[2], self.kernal_size, stride=self.fold_rate, padding=1
-            ),
-            nn.LeakyReLU(),
-            nn.InstanceNorm1d(self.real_input_dim // self.fold_rate ** 4),
-            nn.Conv1d(self.channel_list[2], self.channel_list[2], self.kernal_size, stride=1, padding=1),
-        )
-        self.dec2 = nn.Sequential(
-            nn.LeakyReLU(),
-            nn.InstanceNorm1d(self.real_input_dim // self.fold_rate ** 3),
-            # nn.ConvTranspose1d(
-            nn.Conv1d(
-                self.channel_list[2], self.channel_list[1], self.kernal_size, stride=self.fold_rate, padding=1
-            ),
-            nn.LeakyReLU(),
-            nn.InstanceNorm1d(self.real_input_dim // self.fold_rate ** 3),
-            nn.Conv1d(self.channel_list[1], self.channel_list[1], self.kernal_size, stride=1, padding=1),
-        )
-        self.dec3 = nn.Sequential(
-            nn.LeakyReLU(),
-            nn.InstanceNorm1d(self.real_input_dim // self.fold_rate ** 2),
-            # nn.ConvTranspose1d(
-            nn.Conv1d(
-                self.channel_list[1], self.channel_list[0], self.kernal_size, stride=self.fold_rate, padding=1
-            ),
-            nn.LeakyReLU(),
-            nn.InstanceNorm1d(self.real_input_dim // self.fold_rate ** 2),
-            nn.Conv1d(self.channel_list[0], self.channel_list[0], self.kernal_size, stride=1, padding=1),
-        )
-        self.dec4 = nn.Sequential(
-            nn.LeakyReLU(),
-            nn.InstanceNorm1d(self.real_input_dim // self.fold_rate),
-            # nn.ConvTranspose1d(
-            nn.Conv1d(
-                self.channel_list[0], self.channel_list[0], self.kernal_size, stride=self.fold_rate, padding=1
-            ),
-            nn.LeakyReLU(),
-            nn.InstanceNorm1d(self.real_input_dim // self.fold_rate),
-            nn.Conv1d(self.channel_list[0], in_channel, self.kernal_size, stride=1, padding=1),
-        )
-
-        self.time_encode = nn.Embedding(time_step, self.real_input_dim)
-
-    def forward(self, input, time, cond=None):
-        # if self.dec is not None:
-        #     input = self.dec.Enc(input).detach()
-        # assert input.shape[1]*input.shape[2] == self.in_dim
-
-        input_shape = input.shape
-        input = input.reshape(input.shape[0], 1, -1)
-        time_info = self.time_encode(time)[1, None, None]
-        time_info = time_info.repeat((input.shape[0], 1, 1))
-
-        if len(input.size()) == 2:
-            input = input.view(input.size(0), 1, -1)
-
-        input = input
-        # input = torch.cat(
-        #     [
-        #         input,
-        #         # time_info.repeat((1,input.shape[1],1)),
-        #         torch.zeros(input.shape[0], input.shape[1], (self.real_input_dim - self.in_dim)).to(
-        #             input.device
-        #         ),
-        #     ],
-        #     dim=2,
-        # )
-        # import pdb; pdb.set_trace()
-        # time_info = torch.cat([time_info, torch.zeros(time_info.shape[0],1,6).to(time_info.device) ], dim=2)
-        emb_enc1 = self.enc1(input + time_info)
-        emb_enc2 = self.enc2(emb_enc1 + time_info)
-        emb_enc3 = self.enc3(emb_enc2 + time_info)
-        emb_enc4 = self.enc4(emb_enc3 + time_info)
-        # import pdb; pdb.set_trace()
-
-        emb_dec1 = self.dec1(emb_enc4 + time_info) + emb_enc3
-        emb_dec2 = self.dec2(emb_dec1 + time_info) + emb_enc2
-        emb_dec3 = self.dec3(emb_dec2 + time_info) + emb_enc1
-        emb_dec4 = self.dec4(emb_dec3 + time_info)
-        # import pdb; pdb.set_trace()
-
-        emb_dec4 = emb_dec4.reshape(input_shape)
-        # if self.dec is not None:
-        #     emb_dec4 = self.dec.Dec(emb_dec4)
-
-        return emb_dec4
 
 
 ## backbone fc 不降维 对于小参数量work:9914
@@ -1230,74 +1169,6 @@ class AE(nn.Module):
         return emb_dec4.reshape(input_shape)
 
 
-class TF(nn.Module):
-    def __init__(
-            self,
-            in_dim,
-            channel=1,
-            time_step=1000,
-    ):
-        super().__init__()
-        self.in_dim = in_dim
-        self.len_token = 30
-
-        self.enc = TransformerEncoder(
-            d_model=self.len_token,
-            nhead=5,
-            dim_feedforward=2048,
-            num_layers=3,
-            dropout=0.1,
-        )
-        self.dec = TransformerDecoder(
-            d_model=self.len_token,
-            nhead=5,
-            dim_feedforward=2048,
-            num_layers=3,
-            dropout=0.1,
-        )
-        self.time_encode = nn.Sequential(
-            # TimeEmbedding(channel),
-            nn.Embedding(time_step, self.len_token),
-            # linear(channel, in_dim),
-            # Swish(),
-            # linear(in_dim, in_dim),
-        )
-
-    def forward(self, input, time, cond=None):
-        # import pdb; pdb.set_trace()
-        # time_embed = self.time(time) # + self.label_emb(cond)
-        input_shape = input.shape
-        if len(input.size()) > 2:
-            input = input.view(input.size(0), -1)
-        # print('input.shape', input.shape)
-        input_view_shape = input.shape
-
-        # if input_view_shape[1] < self.in_dim:
-        input_pad = torch.cat(
-            [
-                input,
-                torch.zeros(input_view_shape[0], self.in_dim - input_view_shape[1]).to(
-                    input.device
-                ),
-            ],
-            dim=1,
-        )
-        input_seq = input_pad.reshape(input_view_shape[0], -1, 30)
-
-        # import pdb; pdb.set_trace()
-        time_emb = self.time_encode(time)
-        time_emb_rs = time_emb.reshape(input_view_shape[0], 1, 30)
-        emb_enc1 = self.enc(input_seq + time_emb_rs)
-        # print('time_emb.shape', time_emb.shape)
-        # print('emb_enc1.shape', emb_enc1.shape)
-        out_dec1 = self.dec(emb_enc1, emb_enc1)
-
-        # if input_view_shape[1] < self.in_dim:
-        out = out_dec1.reshape(input_view_shape[0], -1)
-        out = out[:, : input_view_shape[1]]
-        out = out.reshape(input_shape)
-
-        return out
 
 
 class PositionalEncoding(nn.Module):
@@ -1320,31 +1191,3 @@ class PositionalEncoding(nn.Module):
         return self.dropout(x)
 
 
-class TransformerEncoder(nn.Module):
-    def __init__(self, nhead, dim_feedforward, num_layers, d_model, dropout=0.1):
-        super(TransformerEncoder, self).__init__()
-        encoder_layer = nn.TransformerEncoderLayer(
-            d_model, nhead, dim_feedforward, dropout
-        )
-        self.transformer_encoder = nn.TransformerEncoder(encoder_layer, num_layers)
-        self.pos_encoder = PositionalEncoding(d_model)
-
-    def forward(self, src):
-        src = self.pos_encoder(src)
-        output = self.transformer_encoder(src)
-        return output
-
-
-class TransformerDecoder(nn.Module):
-    def __init__(self, nhead, dim_feedforward, num_layers, d_model, dropout=0.1):
-        super(TransformerDecoder, self).__init__()
-        decoder_layer = nn.TransformerDecoderLayer(
-            d_model, nhead, dim_feedforward, dropout
-        )
-        self.transformer_decoder = nn.TransformerDecoder(decoder_layer, num_layers)
-        self.pos_decoder = PositionalEncoding(d_model)
-
-    def forward(self, tgt, memory):
-        tgt = self.pos_decoder(tgt)
-        output = self.transformer_decoder(tgt, memory)
-        return output
