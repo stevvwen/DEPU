@@ -11,7 +11,7 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 
-from models.core import DeterministicActor, Critic
+from agents.core import DeterministicActor, Critic
 import core.utils.utils as utils
 
 

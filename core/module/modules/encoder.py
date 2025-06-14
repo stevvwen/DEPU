@@ -296,6 +296,8 @@ class medium(nn.Module):
         return x + torch.randn_like(x) * factor
 
     def forward(self, x):
+        if not isinstance(x, torch.Tensor):
+            raise TypeError("Input must be a torch.Tensor")
         if len(x.shape) == 2:
             x = x.unsqueeze(1)  # [B, 1, D]
         elif len(x.shape) == 3 and x.shape[1] != 1:
