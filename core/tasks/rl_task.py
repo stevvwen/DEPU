@@ -10,7 +10,7 @@ from joblib import Parallel, delayed
 import os
 import torch
 from core.utils.utils import get_storage_usage, extract_agent_params, replace_agent
-from core.utils.format import config_to_dict
+import omegaconf
 
 
 def train_one_agent(agent_id, cfg, actor_layers, critic_layers, tmp_path):

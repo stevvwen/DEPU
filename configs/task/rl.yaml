@@ -24,7 +24,7 @@ device:
 
 ######## RL outer configuration ########
 replay_buffer:
-  _target_: core.utils.replay_memory.ReplayMemory
+  _target_: agents.replay_memory.ReplayMemory
   capacity: 100000
   seed: ${seed}
 
