@@ -51,57 +51,13 @@ def replace_agent(flattened, model, actor_train_layer, critic_train_layer, actor
     return model
 
 
-def test_generated_partial(net, param, train_layer, dataloader, fea_path=None):
-    target_num = 0
-    for name, module in net.named_parameters():
-        if name in train_layer:
-            target_num += torch.numel(module)
-    params_num = torch.squeeze(param).shape[0]  # + 30720
-    assert (target_num == params_num)
-    param = torch.squeeze(param)
-    net, _ = partial_reverse_tomodel(param, net, train_layer).to(param.device)
-    acc, loss, output_list = test(net, dataloader, fea_path=fea_path)
-    del net
-    return acc, output_list
+def replace_policy(flattened, model, actor_train_layer, actor_num):
+    model.actor, actor_num_param = partial_reverse_tomodel(flattened[:actor_num], model.actor, actor_train_layer)
 
+    assert actor_num_param == actor_num
 
-def test(model, test_loader,fea_path=None):
-    model.eval()
-    test_loss = 0
-    correct = 0
-    total = 0
+    return model
 
-    output_list = []
-
-    with torch.no_grad():
-        if fea_path is not None:
-            expert_files = os.listdir(fea_path)
-            for m in expert_files:
-                models = fea_path + m
-                fea_targets = torch.load(models)
-                targets = fea_targets[1].to('cuda')
-                inputs = fea_targets[0].to('cuda')
-                outputs = model.forward_norm(inputs)
-                _, predicted = outputs.max(1)
-            total += targets.size(0)
-            correct += predicted.eq(targets).sum().item()
-            acc = 100.*correct/total
-            return acc, _
-        for data, target in test_loader:
-            data, target = data.cuda(), target.cuda()
-            output = model(data)
-            target=target.to(torch.int64)
-            test_loss += F.cross_entropy(output, target, size_average=False).item()  # sum up batch loss
-
-            total += data.shape[0]
-            pred = torch.max(output, 1)[1]
-            output_list += pred.cpu().numpy().tolist()
-            correct += pred.eq(target.view_as(pred)).sum().item()
-
-    test_loss /= total
-    acc = 100. * correct / total
-    del model
-    return acc, test_loss, output_list
 
 
 def top_acc_params(self, accs, params, topk):
@@ -161,38 +117,7 @@ def get_storage_usage(path):
     usage_gb = sum(list1)/1024/1024/1024
     return usage_gb
 
-def reverse_tomodel(flattened, model):
-    example_parameters = [p for p in model.parameters()]
-    length = 0
-    reversed_params = []
 
-    for p in example_parameters:
-        flattened_params = flattened[length: length+p.numel()]
-        reversed_params.append(flattened_params.reshape(p.shape))
-        length += p.numel()
-
-    layer_idx = 0
-    for p in model.parameters():
-        p.data = reversed_params[layer_idx]
-        p.data.to(flattened.device)
-        p.data.requires_grad_(True)
-        layer_idx += 1
-    return model
-
-def test_ensem(self, best_params, net):
-    stacked = torch.stack(list(torch.squeeze(best_params)))
-    mean = torch.mean(stacked, dim = 0)
-    ensemble_model = reverse_tomodel(mean, net)
-    acc,_= test(ensemble_model.cuda(), self.testloader)
-    del best_params
-    return acc
-
-def test_ensem_partial(self, best_params,dataloader,fea_path=None):
-    stacked = torch.stack(list(torch.squeeze(best_params)))
-    mean = torch.mean(stacked, dim = 0)
-    acc = test_generated_partial(self, mean,dataloader,fea_path=fea_path)
-    del best_params
-    return acc
 
 
 # Utility Code for TD3 agent
