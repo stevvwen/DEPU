@@ -10,7 +10,7 @@ def custom_collate(batch):
         return default_collate([item[0] for item in batch])
     return default_collate(batch)
 
-class RLData(pl.LightningDataModule):
+class RLDataSet(pl.LightningDataModule):
     def __init__(self, cfg):
         super().__init__()
         self.root = getattr(cfg, 'data_root', './data')
