@@ -3,12 +3,10 @@ Implementation of Twin Delayed Deep Deterministic Policy Gradients (TD3)
 https://arxiv.org/abs/1802.09477
 """
 
-import hydra
 import copy
 import numpy as np
 from pathlib import Path
 import torch
-import torch.nn as nn
 import torch.nn.functional as F
 
 from agents.core import DeterministicActor, Critic

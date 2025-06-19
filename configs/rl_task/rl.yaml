@@ -16,10 +16,7 @@ eval_mode: False
 eval_interval: 1000
 num_agents: 100
 
-device:
-  cuda_visible_devices:  "0,1,2,3,4,5,6"
-  id: 0
-  cuda: cuda:0
+device: cuda:0
 
 
 ######## RL outer configuration ########
@@ -40,13 +37,13 @@ train_layer: "all"
 data:
   data_root: data/rl
   dataset: Null
-  batch_size: 64
+  batch_size: 200
   num_workers: 1
 
 
 param:
-  data_root: param_data/Pendulum-v1_current/data.pt
-  val_data_root: param_data/Pendulum-v1_current/val_data.pt
+  data_root: param_data/Pendulum-v1_current_policy/data.pt
+  val_data_root: param_data/Pendulum-v1_current_policy/val_data.pt
   k: 10000
   num_workers: 4
   batch_size: 128

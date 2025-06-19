@@ -1,11 +1,9 @@
 # Configurations for Inverted pendulum
-
-
 env_name: "Pendulum-v1"
 
 env_kwargs:
   g: 10.0
 
-max_steps: 100
+max_steps: 10000
 
 
