@@ -19,9 +19,8 @@ class RLTask:
         self.trainer        = AgentTrainer(cfg)
         self.tmp_time       = datetime.datetime.now().strftime("%y%m%d_%H%M%S")
         # for naming saved data
-        self.cfg.data.dataset = cfg.rl_env.env_name
+        self.dataset_name = cfg.rl_env.env_name+ "_" + self.tmp_time
         self.num_agents     = cfg.num_agents
-        self.visualization  = not cfg.debug_mode and cfg.eval_mode
 
         # decide which layers to train
         if cfg.train_layer == "all":
@@ -40,9 +39,9 @@ class RLTask:
         """
         Train multiple agents in parallel, save their params, and aggregate results.
         """
-        save_root = getattr(self.cfg, "save_root", "param_data")
+        save_root = getattr(self.cfg, "save_root", "trained_param")
         tmp_dir   = os.path.join(save_root, f"tmp_{self.tmp_time}")
-        final_dir = os.path.join(save_root, self.cfg.data.dataset)
+        final_dir = os.path.join(save_root, self.dataset_name)
         os.makedirs(tmp_dir, exist_ok=True)
         os.makedirs(final_dir, exist_ok=True)
 
@@ -79,7 +78,7 @@ class RLTask:
         """Train one agent and save its parameters."""
         trainer = AgentTrainer(self.cfg)
         trainer.rollout()
-        avg_score, _ = trainer.evaluate()
+        avg_score = trainer.evaluate()
         params = extract_agent_params(
             self.actor_layers, self.critic_layers, trainer.agent
         )

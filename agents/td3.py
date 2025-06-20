@@ -24,8 +24,8 @@ class TD3Agent:
         self.num_expl_steps = num_expl_steps
         self.stddev_schedule = stddev_schedule
         self.stddev_clip = stddev_clip
-        self.obs_dim= obs_shape[0]
-        self.act_dim = act_shape[0]
+        self.obs_dim= obs_shape
+        self.act_dim = act_shape
         self.act_limit_low= act_limit_low
         self.act_limit_high= act_limit_high
         self.hidden_dim = hidden_dim

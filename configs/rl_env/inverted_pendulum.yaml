@@ -4,6 +4,10 @@ env_name: "Pendulum-v1"
 env_kwargs:
   g: 10.0
 
-max_steps: 10000
+max_steps: 50000
 
+obs_shape: 3
+act_shape: 1
+act_limit_low: -2
+act_limit_high: 2
 

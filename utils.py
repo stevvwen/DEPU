@@ -64,21 +64,6 @@ def get_storage_usage(path):
     return usage_gb
 
 
-def make_agent(env_dict, cfg):
-    cfg.obs_shape = env_dict["obs_shape"]
-    cfg.act_shape = env_dict["act_shape"]
-    cfg.act_limit_low= float(env_dict["act_low"])
-    cfg.act_limit_high= float(env_dict["act_high"])
-    return hydra.utils.instantiate(cfg)
-
-# Util code for env code
-
-def make_env(cfg):
-    env= gym.make(cfg.env_name, **cfg.env_kwargs)
-    eval_env= gym.make(cfg.env_name, **cfg.env_kwargs)
-    return env, eval_env, {"obs_shape": env.observation_space.shape, "act_shape": env.action_space.shape,
-                 "act_high": env.action_space.high[0], "act_low": env.action_space.low[0]}
-
 def test_g_model(self, trainer, param, turns=20):
         """
         Evaluate a single policy parameter vector over `turns` episodes.
@@ -128,8 +113,7 @@ def set_seed(seed):
 def set_device(device_config):
     # set the global cuda device
     torch.backends.cudnn.enabled = True
-    os.environ["CUDA_VISIBLE_DEVICES"] = str(device_config.cuda_visible_devices)
-    torch.cuda.set_device(device_config.cuda)
+    torch.cuda.set_device(device_config)
     torch.set_float32_matmul_precision('high')
     # warnings.filterwarnings("always")
 
@@ -152,7 +136,7 @@ def init_experiment(cfg):
     
     # Log the configuration
     config_dict = config_to_dict(cfg)
-    print("Experiment Configuration:", config_dict)
+    #print("Experiment Configuration:", config_dict)
 
     return save_root, config_dict
 
