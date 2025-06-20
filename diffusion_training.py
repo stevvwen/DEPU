@@ -1,17 +1,12 @@
 import os
 import torch.nn.functional as F
-# set global seed
-import random
-import numpy as np
 import torch
+from utils import set_seed
 seed = SEED = 430
-torch.manual_seed(seed)
-torch.cuda.manual_seed(seed)
-torch.cuda.manual_seed_all(seed)
-torch.backends.cudnn.deterministic = True
-torch.backends.cudnn.benchmark = True
-np.random.seed(seed)
-random.seed(seed)
+
+set_seed(seed)
+
+
 
 # other
 import warnings
@@ -21,7 +16,7 @@ import torch.optim as optim
 # model
 from pdiff.pdiff import PDiff as Model
 from pdiff.pdiff import OneDimVAE as VAE
-from pdiff.diffusion import DDPMSampler, DDIMSampler
+from pdiff.diffusion import DDPMSampler
 from torch.optim.lr_scheduler import CosineAnnealingLR
 from accelerate.utils import DistributedDataParallelKwargs, AutocastKwargs
 from accelerate import Accelerator
@@ -41,7 +36,7 @@ config = {
     "total_steps": 1000,  # diffusion training steps
     "vae_steps": 1000,  # vae training steps
     "learning_rate": 0.0001,  # diffusion learning rate
-    "vae_learning_rate": 3e-4,  # vae learning rate
+    "vae_learning_rate": 1e-3,  # vae learning rate
     "weight_decay": 0.0,
     "save_every": 500,
     "print_every": 20,
@@ -172,8 +167,6 @@ def train_vae():
                     print('Loss: %.6f' % (train_loss/this_steps))
                     this_steps = 0
                     train_loss = 0
-            if batch_idx >= config["vae_steps"]:
-                break
 
 def train():
     this_steps = 0
@@ -211,8 +204,6 @@ def train():
                 state = {"diffusion": accelerator.unwrap_model(model).state_dict(), "vae": vae.state_dict()}
                 torch.save(state, os.path.join(config["checkpoint_save_path"], f"{config['tag']}.pth"))
                 #generate(save_path=config["generated_path"], need_test=True)
-            if batch_idx >= config["total_steps"]:
-                break
 
 """def generate(save_path=config["generated_path"], need_test=True):
     print("\n==> Generating..")
