@@ -1,26 +1,57 @@
 defaults:
-  - task: rl
-  - system: autoencoder
+  - agent: td3
+  - rl_env: inverted_pendulum
+  #- system: autoencoder
   - _self_
 
-
-
+process_title: Diffusion Upscale
 seed: 3407
 
-device:
-  cuda_visible_devices:  "0,1,2,3,4,5,6"
-  id: 0
-  cuda: cuda:0
+device: cuda:0
 
 
-#######################################
+###############RL parameter Training########################
 mode: train
+num_agents: 32
 
-process_title: Diffusion Upscale
-load_system_checkpoint:
+eval_mode: False
+eval_interval: 10000
+
+train_layer: "all"
+
+
+
+
+######## RL Agents outer configuration ########
+replay_buffer:
+  _target_: agents.replay_memory.ReplayMemory
+  capacity: 100000
+  seed: ${seed}
+
+batch_size: 32
+
+save_root: "trained_param"
+
+########################
+
+
+
+diff_param:
+  data_root: param_data/Pendulum-v1_current_policy_new/data.pt
+  val_data_root: param_data/Pendulum-v1_current_policy/val_data.pt
+  k: 10000
+  num_workers: 4
+  batch_size: 128
+  slice_length: 64
+
+
+
 
 output_dir: outputs/rl
 
+
+
+# Hydra configuration
 hydra:
   output_subdir: config
   run:

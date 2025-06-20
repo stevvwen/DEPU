@@ -3,16 +3,14 @@ Implementation of Twin Delayed Deep Deterministic Policy Gradients (TD3)
 https://arxiv.org/abs/1802.09477
 """
 
-import hydra
 import copy
 import numpy as np
 from pathlib import Path
 import torch
-import torch.nn as nn
 import torch.nn.functional as F
 
-from models.core import DeterministicActor, Critic
-import core.utils.utils as utils
+from agents.core import DeterministicActor, Critic
+from agents.agent_utils import * 
 
 
 class TD3Agent:
@@ -26,8 +24,8 @@ class TD3Agent:
         self.num_expl_steps = num_expl_steps
         self.stddev_schedule = stddev_schedule
         self.stddev_clip = stddev_clip
-        self.obs_dim= obs_shape[0]
-        self.act_dim = act_shape[0]
+        self.obs_dim= obs_shape
+        self.act_dim = act_shape
         self.act_limit_low= act_limit_low
         self.act_limit_high= act_limit_high
         self.hidden_dim = hidden_dim
@@ -58,7 +56,7 @@ class TD3Agent:
     def act(self, obs, step, eval_mode):
         with torch.no_grad():
             obs = torch.as_tensor(obs, device=self.device)
-            stddev = utils.schedule(self.stddev_schedule, step)
+            stddev = schedule(self.stddev_schedule, step)
 
             if not eval_mode:
                 action = self.actor(obs.float().unsqueeze(0)).detach().cpu().numpy()[0]
@@ -89,7 +87,7 @@ class TD3Agent:
 
         with torch.no_grad():
             # Select action according to policy and add clipped noise
-            stddev = utils.schedule(self.stddev_schedule, step)
+            stddev = schedule(self.stddev_schedule, step)
             noise = (torch.randn_like(action) * stddev).clamp(-self.stddev_clip, self.stddev_clip)
 
             next_action = (self.actor_target(next_obs) + noise).clamp(self.act_limit_low, self.act_limit_high)
@@ -134,8 +132,8 @@ class TD3Agent:
     def update(self, batch, step):
         metrics = dict()
 
-        batch= utils.to_float_tensor(batch)
-        obs, action, reward, next_obs, mask = utils.to_torch(
+        batch= to_float_tensor(batch)
+        obs, action, reward, next_obs, mask = to_torch(
             batch, self.device)
 
         obs = obs.float()
@@ -151,8 +149,8 @@ class TD3Agent:
             metrics.update(self.update_actor(obs.detach(), step))
 
             # update target networks
-            utils.soft_update_params(self.critic, self.critic_target, self.critic_target_tau)
-            utils.soft_update_params(self.actor, self.actor_target, self.critic_target_tau)
+            soft_update_params(self.critic, self.critic_target, self.critic_target_tau)
+            soft_update_params(self.actor, self.actor_target, self.critic_target_tau)
 
         return metrics
 

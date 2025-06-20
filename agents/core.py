@@ -3,7 +3,7 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 
-import core.utils.utils as utils
+import agents.agent_utils as utils
 
 
 def gaussian_logprob(noise, log_std):

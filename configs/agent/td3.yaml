@@ -2,11 +2,11 @@ agent_name: td3
 
 agent:
   _target_: agents.td3.TD3Agent
-  obs_shape: 3
-  act_shape: 1
-  act_limit_low: -2
-  act_limit_high: 2
-  device: "cuda:0"
+  obs_shape: ${rl_env.obs_shape}
+  act_shape: ${rl_env.act_shape}
+  act_limit_low: ${rl_env.act_limit_low}
+  act_limit_high: ${rl_env.act_limit_high}
+  device: ${device}
   lr: 1e-3
   hidden_dim: 32
   critic_target_tau: 0.01
